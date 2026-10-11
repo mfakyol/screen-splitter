@@ -24,6 +24,20 @@ export interface Zone {
   muted: boolean
 }
 
+/** Player window definition for one physical monitor */
+export interface ScreenConfig {
+  id: string
+  /** When empty the UI shows "Screen N" */
+  name: string
+  /** Electron display id; null = primary display */
+  displayId: number | null
+  layoutId: string
+  zones: Zone[]
+  /** gap between zones (px) */
+  gap: number
+  background: string
+}
+
 export interface AppConfig {
   /** UI language */
   language: Lang
@@ -31,17 +45,12 @@ export interface AppConfig {
   theme: ThemeMode
   /** Accent color */
   accent: AccentId
-  layoutId: string
-  zones: Zone[]
-  /** Electron display id; null = primary display */
-  displayId: number | null
+  /** At least one screen */
+  screens: ScreenConfig[]
   /** Start the player directly when the app opens */
   autoplay: boolean
   /** Launch the app at Windows login */
   autostart: boolean
-  /** gap between zones (px) */
-  gap: number
-  background: string
   /** hide the mouse cursor in the player */
   hideCursor: boolean
 }
@@ -56,5 +65,8 @@ export interface DisplayInfo {
 
 export interface PlayerStatus {
   running: boolean
-  displayId: number | null
+  /** number of open player windows */
+  windows: number
+  /** screen ids skipped because their monitor was already taken */
+  skipped: string[]
 }
