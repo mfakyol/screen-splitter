@@ -24,6 +24,19 @@ It starts automatically with Windows.
 - While the player runs, the settings window stays above the kiosk windows and moves to a free monitor if there is one
 - A legacy single-screen `config.json` is migrated to the new `screens` format on first launch
 
+## Backup and the config format
+
+The **Export settings / Import settings** buttons in the bottom-left corner save and restore all settings as a single JSON file; handy for copying one setup to many devices. Importing writes to disk immediately and restarts the player if it is running.
+
+The `schema` field at the top of the file is the **config format version**, independent of the app version:
+
+| schema | Format |
+|---|---|
+| 1 | v0.1 flat format (`layoutId`, `zones`, `displayId` at the root); assumed when the field is missing |
+| 2 | `screens[]` array, theme and language fields |
+
+Older files are migrated on load. A file with a **newer** schema than the app supports is rejected: importing shows an "update the app" notice, and on startup the file is left untouched and defaults are used. When making a breaking change to the format, bump `CONFIG_SCHEMA_VERSION` and add a migration step to `normalizeConfig`.
+
 ## Supported platforms
 
 This release is packaged and tested for **Windows 10 and later** only. macOS support is planned for a later version; Linux will be added on request.
