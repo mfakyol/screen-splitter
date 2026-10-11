@@ -340,8 +340,9 @@ describe('App - multiple screens', () => {
     const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
     await renderApp({ screens: [screen1, s2] })
     await user().click(tab(/Checkout/))
+    // The delete button lives only in the tab bar
     const buttons = screen.getAllByRole('button', { name: 'Bu ekranı sil' })
-    expect(buttons).toHaveLength(2)
+    expect(buttons).toHaveLength(1)
     await user().click(buttons[0])
 
     const dialog = screen.getByRole('dialog', { name: 'Ekran silinsin mi?' })
@@ -358,7 +359,7 @@ describe('App - multiple screens', () => {
     const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
     await renderApp({ screens: [screen1, s2] })
     await user().click(tab(/Checkout/))
-    await user().click(screen.getAllByRole('button', { name: 'Bu ekranı sil' })[1])
+    await user().click(screen.getByRole('button', { name: 'Bu ekranı sil' }))
     await user().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Sil' }))
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

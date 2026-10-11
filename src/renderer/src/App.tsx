@@ -301,8 +301,6 @@ export default function App(): React.JSX.Element {
               layout={layout}
               displays={displays}
               onRefreshDisplays={refreshDisplays}
-              canDelete={config.screens.length > 1}
-              onDelete={() => requestDelete(activeScreen.id)}
             />
           )}
           {page === 'startup' && <StartupPage {...pageProps} packaged={info?.packaged ?? true} />}

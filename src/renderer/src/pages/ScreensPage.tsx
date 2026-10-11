@@ -5,7 +5,7 @@ import type { PageProps } from '../pageProps'
 import LayoutPreview from '../LayoutPreview'
 import { Card } from '../components/Card'
 import Switch from '../components/Switch'
-import { IconGlobe, IconMonitor, IconRefresh, IconCheck, IconTrash } from '../components/Icons'
+import { IconGlobe, IconMonitor, IconRefresh, IconCheck } from '../components/Icons'
 import { resolveTargets } from '../components/ScreenTabs'
 
 const EMPTY_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: false }
@@ -17,8 +17,6 @@ interface Props extends PageProps {
   layout: Layout
   displays: DisplayInfo[]
   onRefreshDisplays: () => void
-  canDelete: boolean
-  onDelete: () => void
 }
 
 /** Mini rectangle on the monitor card: keeps the aspect ratio */
@@ -41,9 +39,7 @@ export default function ScreensPage({
   layouts,
   layout,
   displays,
-  onRefreshDisplays,
-  canDelete,
-  onDelete
+  onRefreshDisplays
 }: Props): React.JSX.Element {
   const [activeZone, setActiveZone] = useState<number | null>(null)
   const lang = config.language
@@ -303,12 +299,6 @@ export default function ScreensPage({
               <code>{screen.background}</code>
             </div>
           </div>
-
-          {canDelete && (
-            <button type="button" className="btn danger sm" onClick={onDelete}>
-              <IconTrash /> {t('screen.delete')}
-            </button>
-          )}
         </Card>
       </div>
     </div>
