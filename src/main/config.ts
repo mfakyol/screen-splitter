@@ -7,7 +7,8 @@ import { getLayout } from '../shared/layouts'
 import { isLang, langFromLocale } from '../shared/i18n'
 import { DEFAULT_ACCENT, DEFAULT_THEME, isAccentId, isThemeMode } from '../shared/theme'
 
-export const DEFAULT_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: false }
+/** New zones start muted: unexpected audio is unwanted on store displays */
+export const DEFAULT_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: true }
 
 export const DEFAULT_SCREEN: Omit<ScreenConfig, 'id'> = {
   name: '',

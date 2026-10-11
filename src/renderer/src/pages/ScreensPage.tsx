@@ -8,7 +8,7 @@ import Switch from '../components/Switch'
 import { IconGlobe, IconMonitor, IconRefresh, IconCheck } from '../components/Icons'
 import { resolveTargets } from '../components/ScreenTabs'
 
-const EMPTY_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: false }
+const EMPTY_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: true }
 
 interface Props extends PageProps {
   screen: ScreenConfig

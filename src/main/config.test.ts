@@ -24,11 +24,12 @@ import {
 } from './config'
 import type { ScreenConfig } from '../shared/types'
 
+// Default zone: starts muted
 const zone = (url = '', extra: Partial<ScreenConfig['zones'][0]> = {}) => ({
   url,
   refreshSec: 0,
   zoom: 1,
-  muted: false,
+  muted: true,
   ...extra
 })
 

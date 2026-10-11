@@ -122,7 +122,7 @@ export default function App(): React.JSX.Element {
       name: '',
       displayId: free ? free.id : null,
       layoutId: 'single',
-      zones: [{ url: '', refreshSec: 0, zoom: 1, muted: false }],
+      zones: [{ url: '', refreshSec: 0, zoom: 1, muted: true }],
       gap: 0,
       background: '#000000'
     }
