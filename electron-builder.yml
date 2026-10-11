@@ -1,0 +1,19 @@
+appId: com.screensplitter.app
+productName: Screen Splitter
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**
+  - resources/**
+asar: true
+win:
+  target:
+    - nsis
+  icon: resources/icon.png
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  runAfterFinish: true
+  createDesktopShortcut: true
