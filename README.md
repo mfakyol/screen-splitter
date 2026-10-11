@@ -82,7 +82,8 @@ npm run test:coverage  # coverage report
 | `src/shared/layouts.test.ts` | layout geometry: total area, overlap, bounds, fallback |
 | `src/shared/i18n.test.ts` | every key present in every language, consistent placeholders, locale selection |
 | `src/main/config.test.ts` | normalization, round-trip save, BOM, broken JSON, language detection (Electron mocked) |
-| `src/main/player.test.ts` | URL normalization, pixel bounds and gap math, display selection |
+| `src/main/player.test.ts` | URL normalization, pixel bounds and gap math, monitor assignment, display selection |
+| `src/main/backup.test.ts` | import parser: broken JSON (syntax, empty file, array/null, BOM, CRLF), newer-schema rejection, legacy migration, export → import round-trip |
 | `src/renderer/src/App.test.tsx` | UI flows: language switching, layout and zone editing, save, start/stop, display selection (jsdom, mocked `window.api`) |
 
 ## Project structure

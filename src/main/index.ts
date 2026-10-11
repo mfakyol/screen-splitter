@@ -1,15 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, screen, globalShortcut, Tray, Menu, nativeImage, shell } from 'electron'
 import { dirname, join } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
-import {
-  loadConfig,
-  saveConfig,
-  getConfigPath,
-  hasContent,
-  normalizeConfig,
-  UnsupportedConfigError,
-  CONFIG_SCHEMA_VERSION
-} from './config'
+import { loadConfig, saveConfig, getConfigPath, hasContent } from './config'
+import { parseConfigFile, serializeConfig } from './backup'
 import { LAYOUTS } from '../shared/layouts'
 import { Player } from './player'
 import { t, type Lang } from '../shared/i18n'
@@ -225,7 +218,7 @@ function registerIpc(): void {
     const { canceled, filePath } = parent ? await dialog.showSaveDialog(parent, opts) : await dialog.showSaveDialog(opts)
     if (canceled || !filePath) return { ok: false, canceled: true }
     try {
-      writeFileSync(filePath, JSON.stringify(normalizeConfig(cfg), null, 2), 'utf8')
+      writeFileSync(filePath, serializeConfig(cfg), 'utf8')
       return { ok: true, path: filePath }
     } catch (err) {
       return { ok: false, error: String(err) }
@@ -241,23 +234,24 @@ function registerIpc(): void {
     const parent = dialogParent()
     const { canceled, filePaths } = parent ? await dialog.showOpenDialog(parent, opts) : await dialog.showOpenDialog(opts)
     if (canceled || filePaths.length === 0) return { ok: false, canceled: true }
+    let text: string
     try {
-      let text = readFileSync(filePaths[0], 'utf8')
-      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
-      const parsed = JSON.parse(text)
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid config')
-      const saved = saveConfig(normalizeConfig(parsed))
-      applyAutostart(saved.autostart)
-      updateTray()
-      if (settingsWin && !settingsWin.isDestroyed()) settingsWin.setTitle(t(saved.language, 'app.settingsTitle'))
-      if (player.running) startPlayer(saved)
-      return { ok: true, config: saved }
+      text = readFileSync(filePaths[0], 'utf8')
     } catch (err) {
-      if (err instanceof UnsupportedConfigError) {
-        return { ok: false, unsupported: { file: err.fileSchema, supported: CONFIG_SCHEMA_VERSION } }
-      }
       return { ok: false, error: String(err) }
     }
+    const parsed = parseConfigFile(text)
+    if (!parsed.ok) {
+      return parsed.reason === 'unsupported'
+        ? { ok: false, unsupported: parsed.unsupported }
+        : { ok: false, error: parsed.error }
+    }
+    const saved = saveConfig(parsed.config)
+    applyAutostart(saved.autostart)
+    updateTray()
+    if (settingsWin && !settingsWin.isDestroyed()) settingsWin.setTitle(t(saved.language, 'app.settingsTitle'))
+    if (player.running) startPlayer(saved)
+    return { ok: true, config: saved }
   })
 }
 
