@@ -113,9 +113,9 @@ describe('App - loading, language and navigation', () => {
   it('the left menu has three pages and switches between them', async () => {
     await renderApp()
     const nav = screen.getByRole('navigation')
-    expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['Ekranlar', 'Başlatma', 'Görünüm'])
-    await goTo(/^Başlatma$/)
-    expect(screen.getByRole('heading', { level: 1, name: 'Başlatma' })).toBeInTheDocument()
+    expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['Ekranlar', 'Uygulama', 'Görünüm'])
+    await goTo(/^Uygulama$/)
+    expect(screen.getByRole('heading', { level: 1, name: 'Uygulama' })).toBeInTheDocument()
     await goTo(/^Görünüm$/)
     expect(screen.getByRole('heading', { level: 1, name: 'Görünüm' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Görünüm$/ })).toHaveAttribute('aria-current', 'page')
@@ -124,7 +124,7 @@ describe('App - loading, language and navigation', () => {
   it('screen tabs show only on the Screens page', async () => {
     await renderApp()
     expect(screen.getByRole('tablist')).toBeInTheDocument()
-    await goTo(/^Başlatma$/)
+    await goTo(/^Uygulama$/)
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
     await goTo(/^Ekranlar$/)
     expect(screen.getByRole('tablist')).toBeInTheDocument()
@@ -468,7 +468,7 @@ describe('App - saving and player', () => {
     const save = screen.getByRole('button', { name: 'Kaydet' })
     expect(save).toBeDisabled()
 
-    await goTo(/^Başlatma$/)
+    await goTo(/^Uygulama$/)
     await user().click(screen.getByRole('switch', { name: 'Fare imlecini gizle' }))
     expect(save).toBeEnabled()
 
@@ -482,7 +482,7 @@ describe('App - saving and player', () => {
     const api = await renderApp({
       screens: [{ ...screen1, layoutId: 'single', zones: [{ url: '', refreshSec: 0, zoom: 1, muted: false }] }]
     })
-    await goTo(/^Başlatma$/)
+    await goTo(/^Uygulama$/)
     await user().click(screen.getByRole('button', { name: 'Tümünü Başlat' }))
     expect(await screen.findByRole('status')).toHaveTextContent('En az bir bölgeye URL girin')
     expect(api.startPlayer).not.toHaveBeenCalled()
@@ -516,7 +516,7 @@ describe('App - saving and player', () => {
 describe('App - startup page', () => {
   it('switches match the config and can be toggled; cursor hiding lives here', async () => {
     await renderApp({ autostart: true })
-    await goTo(/^Başlatma$/)
+    await goTo(/^Uygulama$/)
     const autostart = screen.getByRole('switch', { name: 'Windows açılışında başlat' })
     const autoplay = screen.getByRole('switch', { name: 'Doğrudan oynatıcıyı aç' })
     expect(autostart).toBeChecked()
@@ -529,17 +529,17 @@ describe('App - startup page', () => {
 
   it('warns in development mode with autostart on, not in the packaged build', async () => {
     await renderApp({ autostart: true }, undefined, false)
-    await goTo(/^Başlatma$/)
+    await goTo(/^Uygulama$/)
     expect(screen.getByText(/Geliştirme modundasınız/)).toBeInTheDocument()
     cleanup()
     await renderApp({ autostart: true }, undefined, true)
-    await goTo(/^Başlatma$/)
+    await goTo(/^Uygulama$/)
     expect(screen.queryByText(/Geliştirme modundasınız/)).not.toBeInTheDocument()
   })
 
   it('lists the shortcuts', async () => {
     await renderApp()
-    await goTo(/^Başlatma$/)
+    await goTo(/^Uygulama$/)
     expect(screen.getByText('Ayarları aç')).toBeInTheDocument()
     expect(screen.getByText('Uygulamadan çık')).toBeInTheDocument()
   })
@@ -554,6 +554,7 @@ describe('App - export/import settings', () => {
   it('export is called with the on-screen config (including unsaved changes) and shows a toast', async () => {
     const api = await renderApp()
     await user().type(screen.getByLabelText('Bölge 2 URL'), 'b.com')
+    await goTo(/^Uygulama$/)
     await user().click(screen.getByRole('button', { name: 'Ayarları dışa aktar' }))
     await waitFor(() =>
       expect(api.exportConfig).toHaveBeenCalledWith(
@@ -569,6 +570,7 @@ describe('App - export/import settings', () => {
 
   it('a canceled export stays silent, an error is shown', async () => {
     const api = await renderApp()
+    await goTo(/^Uygulama$/)
     ;(api.exportConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: false, canceled: true })
     await user().click(screen.getByRole('button', { name: 'Ayarları dışa aktar' }))
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
@@ -580,35 +582,41 @@ describe('App - export/import settings', () => {
 
   it('a successful import replaces the config and counts as saved', async () => {
     const api = await renderApp()
+    // make a change first: importing must reset dirty
+    await user().type(screen.getByLabelText('Bölge 2 URL'), 'x')
+    await goTo(/^Uygulama$/)
     const imported: AppConfig = {
       ...baseConfig,
       language: 'en',
       screens: [{ ...screen1, id: 'imp1', name: 'Imported', layoutId: 'single', zones: [screen1.zones[0]] }]
     }
     ;(api.importConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, config: imported })
-    // make a change first: importing must reset dirty
-    await user().type(screen.getByLabelText('Bölge 2 URL'), 'x')
     await user().click(screen.getByRole('button', { name: 'Ayarları içe aktar' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Screens' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Imported/ })).toHaveAttribute('aria-selected', 'true')
+    // the language was imported too: the page is now in English
+    expect(await screen.findByRole('heading', { level: 1, name: 'App' })).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('Settings imported')
     expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
+    await goTo(/^Screens$/)
+    expect(screen.getByRole('tab', { name: /Imported/ })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('rejects a newer-format file and shows version info', async () => {
     const api = await renderApp()
+    await goTo(/^Uygulama$/)
     ;(api.importConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       unsupported: { file: 3, supported: 2 }
     })
     await user().click(screen.getByRole('button', { name: 'Ayarları içe aktar' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Dosya biçimi v3; uygulamanın bu sürümü en fazla v2')
+    await goTo(/^Ekranlar$/)
     expect(screen.getByRole('tab', { name: /Ekran 1/ })).toBeInTheDocument()
   })
 
   it('a canceled import changes nothing, a broken file shows an error', async () => {
     const api = await renderApp()
+    await goTo(/^Uygulama$/)
     await user().click(screen.getByRole('button', { name: 'Ayarları içe aktar' }))
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
 

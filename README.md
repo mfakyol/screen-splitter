@@ -19,14 +19,14 @@ It starts automatically with Windows.
 - Windows are redistributed when monitors are plugged in or removed
 - Languages: English, Turkish, German (picked from the system locale on first run, changeable on the Appearance page)
 - Theme: System / Light / Dark plus six accent colors, applied and saved instantly
-- Settings UI with left navigation: Screens (monitor, preview, zones, layouts and screen settings grouped on one page), Startup, Appearance
+- Settings UI with left navigation: Screens (monitor, preview, zones, layouts and screen settings grouped on one page), App (startup, player, backup, shortcuts), Appearance
 - **Multiple screens:** each monitor gets its own layout and zones, with one kiosk window per monitor. If two screens target the same monitor the second is skipped with a warning. "Start All" opens every screen; "Start only this screen" in the tab bar opens just the selected one, and a green dot marks running screens
 - While the player runs, the settings window stays above the kiosk windows and moves to a free monitor if there is one
 - A legacy single-screen `config.json` is migrated to the new `screens` format on first launch
 
 ## Backup and the config format
 
-The **Export settings / Import settings** buttons in the bottom-left corner save and restore all settings as a single JSON file; handy for copying one setup to many devices. Importing writes to disk immediately and restarts the player if it is running.
+The **Backup** card on the App page offers **Export settings / Import settings**, which save and restore all settings as a single JSON file; handy for copying one setup to many devices. Importing writes to disk immediately and restarts the player if it is running.
 
 The `schema` field at the top of the file is the **config format version**, independent of the app version:
 

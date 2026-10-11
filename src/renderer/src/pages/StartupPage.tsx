@@ -2,9 +2,12 @@ import type React from 'react'
 import type { PageProps } from '../pageProps'
 import { Card } from '../components/Card'
 import Switch from '../components/Switch'
+import { IconDownload, IconUpload } from '../components/Icons'
 
 interface Props extends PageProps {
   packaged: boolean
+  onExport: () => void
+  onImport: () => void
 }
 
 const SHORTCUTS: { keys: string[]; label: 'keys.settings' | 'keys.stop' | 'keys.reload' | 'keys.quit' }[] = [
@@ -14,7 +17,7 @@ const SHORTCUTS: { keys: string[]; label: 'keys.settings' | 'keys.stop' | 'keys.
   { keys: ['Ctrl', 'Shift', 'Q'], label: 'keys.quit' }
 ]
 
-export default function StartupPage({ config, t, update, packaged }: Props): React.JSX.Element {
+export default function StartupPage({ config, t, update, packaged, onExport, onImport }: Props): React.JSX.Element {
   return (
     <div className="page-stack narrow">
       <Card title={t('section.autostart')}>
@@ -45,6 +48,17 @@ export default function StartupPage({ config, t, update, packaged }: Props): Rea
             checked={config.hideCursor}
             onChange={(hideCursor) => update({ hideCursor })}
           />
+        </div>
+      </Card>
+
+      <Card title={t('section.backup')} description={t('backup.desc')}>
+        <div className="backup-row">
+          <button type="button" className="btn" onClick={onExport}>
+            <IconDownload /> {t('backup.export')}
+          </button>
+          <button type="button" className="btn" onClick={onImport}>
+            <IconUpload /> {t('backup.import')}
+          </button>
         </div>
       </Card>
 

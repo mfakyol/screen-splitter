@@ -15,11 +15,11 @@ const tr = {
   'app.loading': 'Yükleniyor…',
 
   'nav.screens': 'Ekranlar',
-  'nav.startup': 'Başlatma',
+  'nav.startup': 'Uygulama',
   'nav.appearance': 'Görünüm',
 
   'page.screens.desc': 'Her ekran için monitörü, düzeni ve bölgelerin web adreslerini belirleyin.',
-  'page.startup.desc': 'Uygulamanın Windows ile birlikte nasıl açılacağını ve oynatıcı davranışını belirleyin.',
+  'page.startup.desc': 'Başlatma, oynatıcı davranışı, yedekleme ve kısayollar.',
 
   'section.monitor': 'Monitör',
   'section.screenSettings': 'Ekran ayarları',
@@ -86,6 +86,8 @@ const tr = {
 
   'backup.export': 'Ayarları dışa aktar',
   'backup.import': 'Ayarları içe aktar',
+  'section.backup': 'Yedekleme',
+  'backup.desc': 'Tüm ayarları tek bir JSON dosyası olarak kaydedin veya başka bir cihazdan yükleyin.',
   'toast.exported': 'Ayarlar dışa aktarıldı',
   'toast.exportFailed': 'Dışa aktarılamadı: {err}',
   'toast.imported': 'Ayarlar içe aktarıldı',
@@ -164,11 +166,11 @@ const en: Record<TKey, string> = {
   'app.loading': 'Loading…',
 
   'nav.screens': 'Screens',
-  'nav.startup': 'Startup',
+  'nav.startup': 'App',
   'nav.appearance': 'Appearance',
 
   'page.screens.desc': 'For each screen, pick the monitor, the layout and the web address of every zone.',
-  'page.startup.desc': 'Decide how the app launches with Windows and how the player behaves.',
+  'page.startup.desc': 'Startup, player behavior, backup and shortcuts.',
 
   'section.monitor': 'Monitor',
   'section.screenSettings': 'Screen settings',
@@ -235,6 +237,8 @@ const en: Record<TKey, string> = {
 
   'backup.export': 'Export settings',
   'backup.import': 'Import settings',
+  'section.backup': 'Backup',
+  'backup.desc': 'Save all settings as a single JSON file or load them from another device.',
   'toast.exported': 'Settings exported',
   'toast.exportFailed': 'Export failed: {err}',
   'toast.imported': 'Settings imported',
@@ -308,11 +312,11 @@ const de: Record<TKey, string> = {
   'app.loading': 'Wird geladen…',
 
   'nav.screens': 'Bildschirme',
-  'nav.startup': 'Start',
+  'nav.startup': 'App',
   'nav.appearance': 'Darstellung',
 
   'page.screens.desc': 'Legen Sie je Bildschirm Monitor, Layout und die Webadressen der Bereiche fest.',
-  'page.startup.desc': 'Bestimmen Sie, wie die App mit Windows startet und wie sich der Player verhält.',
+  'page.startup.desc': 'Start, Player-Verhalten, Sicherung und Tastenkürzel.',
 
   'section.monitor': 'Monitor',
   'section.screenSettings': 'Bildschirmeinstellungen',
@@ -379,6 +383,8 @@ const de: Record<TKey, string> = {
 
   'backup.export': 'Einstellungen exportieren',
   'backup.import': 'Einstellungen importieren',
+  'section.backup': 'Sicherung',
+  'backup.desc': 'Alle Einstellungen als eine JSON-Datei speichern oder von einem anderen Gerät laden.',
   'toast.exported': 'Einstellungen exportiert',
   'toast.exportFailed': 'Export fehlgeschlagen: {err}',
   'toast.imported': 'Einstellungen importiert',

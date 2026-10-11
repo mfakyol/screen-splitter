@@ -230,19 +230,10 @@ p {
     opacity: 0.5;
   }
 }
-.backup-actions {
+.backup-row {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.backup-actions .btn {
-  justify-content: flex-start;
-  width: 100%;
-  font-weight: 500;
-  color: var(--text-2);
-}
-.backup-actions .btn:hover:not(:disabled) {
-  color: var(--text);
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .version {
   color: var(--text-3);

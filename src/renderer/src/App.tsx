@@ -16,8 +16,6 @@ import {
   IconStop,
   IconRefresh,
   IconSave,
-  IconDownload,
-  IconUpload,
   Logo
 } from './components/Icons'
 
@@ -270,14 +268,6 @@ export default function App(): React.JSX.Element {
               <span className="status-sub">{t('status.windows', { n: status.windows })}</span>
             )}
           </div>
-          <div className="backup-actions">
-            <button type="button" className="btn ghost sm" onClick={exportSettings} title={t('backup.export')}>
-              <IconDownload /> {t('backup.export')}
-            </button>
-            <button type="button" className="btn ghost sm" onClick={importSettings} title={t('backup.import')}>
-              <IconUpload /> {t('backup.import')}
-            </button>
-          </div>
           {info && <span className="version">v{info.version}</span>}
         </div>
       </aside>
@@ -341,7 +331,14 @@ export default function App(): React.JSX.Element {
               onRefreshDisplays={refreshDisplays}
             />
           )}
-          {page === 'startup' && <StartupPage {...pageProps} packaged={info?.packaged ?? true} />}
+          {page === 'startup' && (
+            <StartupPage
+              {...pageProps}
+              packaged={info?.packaged ?? true}
+              onExport={exportSettings}
+              onImport={importSettings}
+            />
+          )}
           {page === 'appearance' && <AppearancePage {...pageProps} />}
         </div>
       </div>
