@@ -272,6 +272,7 @@ export default function App(): React.JSX.Element {
               activeId={activeScreen.id}
               onSelect={setActiveScreenId}
               onAdd={addScreen}
+              onDelete={() => removeScreen(activeScreen.id)}
               t={t}
             />
           </div>

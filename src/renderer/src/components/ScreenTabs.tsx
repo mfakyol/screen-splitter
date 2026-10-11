@@ -1,7 +1,7 @@
 import type React from 'react'
 import type { DisplayInfo, ScreenConfig } from '../../../shared/types'
 import type { TFn } from '../pageProps'
-import { IconMonitor, IconPlus } from './Icons'
+import { IconMonitor, IconPlus, IconTrash } from './Icons'
 
 interface Props {
   screens: ScreenConfig[]
@@ -9,6 +9,8 @@ interface Props {
   activeId: string
   onSelect: (id: string) => void
   onAdd: () => void
+  /** Deletes the active screen; hidden when there is only one screen */
+  onDelete: () => void
   t: TFn
 }
 
@@ -34,7 +36,15 @@ export function resolveTargets(
   return { label, conflict }
 }
 
-export default function ScreenTabs({ screens, displays, activeId, onSelect, onAdd, t }: Props): React.JSX.Element {
+export default function ScreenTabs({
+  screens,
+  displays,
+  activeId,
+  onSelect,
+  onAdd,
+  onDelete,
+  t
+}: Props): React.JSX.Element {
   const { label, conflict } = resolveTargets(screens, displays)
   return (
     <div className="screen-tabs" role="tablist" aria-label={t('section.zones')}>
@@ -65,6 +75,12 @@ export default function ScreenTabs({ screens, displays, activeId, onSelect, onAd
         <IconPlus />
         <span>{t('screens.add')}</span>
       </button>
+      {screens.length > 1 && (
+        <button type="button" className="screen-tab remove" onClick={onDelete} title={t('screen.delete')}>
+          <IconTrash />
+          <span>{t('screen.delete')}</span>
+        </button>
+      )}
     </div>
   )
 }

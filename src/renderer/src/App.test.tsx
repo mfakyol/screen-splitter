@@ -296,15 +296,36 @@ describe('App - multiple screens', () => {
     expect(screen.getByText('Aynı monitör başka bir ekrana atanmış')).toBeInTheDocument()
   })
 
-  it('no delete button with one screen; present with two and deletes', async () => {
+  it('no delete button at all with a single screen', async () => {
+    await renderApp()
+    expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
+    await goTo(/^Ekran$/)
+    expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
+  })
+
+  it('with two screens the tab bar delete button removes the active screen', async () => {
     const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
     await renderApp({ screens: [screen1, s2] })
     await user().click(tab(/Checkout/))
-    await goTo(/^Ekran$/)
+    // On the layout page, a single delete button in the tab bar
     await user().click(screen.getByRole('button', { name: 'Bu ekranı sil' }))
-    expect(screen.getAllByRole('tab')).toHaveLength(1)
-    expect(screen.getAllByRole('tab')[0]).toHaveAttribute('aria-selected', 'true')
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs).toHaveLength(1)
+    expect(tabs[0]).toHaveTextContent('Ekran 1')
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
     expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
+    expect(screen.getByText('Kaydedilmemiş değişiklikler')).toBeInTheDocument()
+  })
+
+  it('the display page has delete buttons in both the tab bar and the card', async () => {
+    const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
+    await renderApp({ screens: [screen1, s2] })
+    await goTo(/^Ekran$/)
+    const buttons = screen.getAllByRole('button', { name: 'Bu ekranı sil' })
+    expect(buttons).toHaveLength(2)
+    await user().click(buttons[1])
+    expect(screen.getAllByRole('tab')).toHaveLength(1)
+    expect(screen.getAllByRole('tab')[0]).toHaveTextContent('Checkout')
   })
 
   it('shows the window count when the player runs with several windows', async () => {

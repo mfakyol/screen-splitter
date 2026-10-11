@@ -1033,6 +1033,19 @@ kbd {
   border-color: var(--accent);
   color: var(--accent);
 }
+.screen-tab.remove {
+  margin-left: auto;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-3);
+  font-weight: 500;
+  font-size: 13px;
+}
+.screen-tab.remove:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
 .status-sub {
   font-weight: 500;
   opacity: 0.8;
