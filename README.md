@@ -20,6 +20,13 @@ It starts automatically with Windows.
 - Languages: English, Turkish, German (picked from the system locale on first run, changeable on the Appearance page)
 - Theme: System / Light / Dark plus six accent colors, applied and saved instantly
 - Settings UI with left navigation: Layout & Zones, Display, Startup, Appearance
+- **Multiple screens:** each monitor gets its own layout and zones, with one kiosk window per monitor. If two screens target the same monitor the second is skipped with a warning
+- While the player runs, the settings window stays above the kiosk windows and moves to a free monitor if there is one
+- A legacy single-screen `config.json` is migrated to the new `screens` format on first launch
+
+## Supported platforms
+
+This release is packaged and tested for **Windows 10 and later** only. macOS support is planned for a later version; Linux will be added on request.
 
 ## Adding a language
 
