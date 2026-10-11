@@ -6,7 +6,8 @@ import { useTheme } from './useTheme'
 import ScreensPage from './pages/ScreensPage'
 import StartupPage from './pages/StartupPage'
 import AppearancePage from './pages/AppearancePage'
-import ScreenTabs from './components/ScreenTabs'
+import ScreenTabs, { screenLabel } from './components/ScreenTabs'
+import ConfirmDialog from './components/ConfirmDialog'
 import {
   IconMonitor,
   IconPower,
@@ -52,6 +53,11 @@ export default function App(): React.JSX.Element {
   const [dirty, setDirty] = useState(false)
   const [toast, setToast] = useState<Toast>(null)
   const [info, setInfo] = useState<AppInfo | null>(null)
+  /** Screen ids saved to disk; used for the delete confirmation */
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [pendingDelete, setPendingDelete] = useState<ScreenConfig | null>(null)
+
+  const markSaved = (cfg: AppConfig): void => setSavedIds(new Set(cfg.screens.map((s) => s.id)))
 
   const lang: Lang = config?.language ?? 'en'
   const t: TFn = useCallback((key, params) => translate(lang, key, params), [lang])
@@ -67,6 +73,7 @@ export default function App(): React.JSX.Element {
       window.api.getAppInfo()
     ]).then(([cfg, lays, disps, st, inf]) => {
       setConfig(cfg)
+      markSaved(cfg)
       setLayouts(lays)
       setDisplays(disps)
       setStatus(st)
@@ -129,6 +136,16 @@ export default function App(): React.JSX.Element {
     const rest = config.screens.filter((s) => s.id !== id)
     update({ screens: rest })
     setActiveScreenId(rest[Math.max(0, idx - 1)].id)
+    setPendingDelete(null)
+  }
+
+  /** Asks for confirmation for a saved screen; deletes an unsaved one directly */
+  const requestDelete = (id: string): void => {
+    if (!config || config.screens.length <= 1) return
+    const scr = config.screens.find((s) => s.id === id)
+    if (!scr) return
+    if (savedIds.has(id)) setPendingDelete(scr)
+    else removeScreen(id)
   }
 
   /** Preferences like theme/language apply and save immediately; pending changes are kept. */
@@ -136,7 +153,10 @@ export default function App(): React.JSX.Element {
     setConfig((c) => {
       if (!c) return c
       const next = { ...c, ...patch }
-      window.api.saveConfig(next).catch(() => setDirty(true))
+      window.api
+        .saveConfig(next)
+        .then(() => markSaved(next))
+        .catch(() => setDirty(true))
       return next
     })
   }, [])
@@ -146,6 +166,7 @@ export default function App(): React.JSX.Element {
     try {
       const saved = await window.api.saveConfig(config)
       setConfig(saved)
+      markSaved(saved)
       setDirty(false)
       setToast({ kind: 'ok', text: t('toast.saved') })
     } catch (e) {
@@ -161,6 +182,7 @@ export default function App(): React.JSX.Element {
       return
     }
     const st = await window.api.startPlayer(config)
+    markSaved(config)
     setDirty(false)
     setStatus(st)
     if (st.skipped.length > 0) setToast({ kind: 'err', text: t('toast.skipped', { n: st.skipped.length }) })
@@ -263,7 +285,7 @@ export default function App(): React.JSX.Element {
               activeId={activeScreen.id}
               onSelect={setActiveScreenId}
               onAdd={addScreen}
-              onDelete={() => removeScreen(activeScreen.id)}
+              onDelete={() => requestDelete(activeScreen.id)}
               t={t}
             />
           </div>
@@ -280,13 +302,25 @@ export default function App(): React.JSX.Element {
               displays={displays}
               onRefreshDisplays={refreshDisplays}
               canDelete={config.screens.length > 1}
-              onDelete={() => removeScreen(activeScreen.id)}
+              onDelete={() => requestDelete(activeScreen.id)}
             />
           )}
           {page === 'startup' && <StartupPage {...pageProps} packaged={info?.packaged ?? true} />}
           {page === 'appearance' && <AppearancePage {...pageProps} />}
         </div>
       </div>
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title={t('confirm.deleteTitle')}
+          message={t('confirm.deleteBody', { name: screenLabel(t, config.screens, pendingDelete) })}
+          confirmLabel={t('btn.delete')}
+          cancelLabel={t('btn.cancel')}
+          danger
+          onConfirm={() => removeScreen(pendingDelete.id)}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
 
       {toast && (
         <div className={'toast ' + toast.kind} role="status">

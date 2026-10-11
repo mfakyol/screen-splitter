@@ -74,6 +74,11 @@ const tr = {
   'screen.name': 'Ekran adı',
   'screen.nameDesc': 'Yalnızca sekmede görünür',
   'screen.delete': 'Bu ekranı sil',
+  'confirm.deleteTitle': 'Ekran silinsin mi?',
+  'confirm.deleteBody':
+    '"{name}" kaydedilmiş bir ekran. Silip Kaydet\'e bastığınızda düzeni ve bölge adresleri kalıcı olarak kaldırılır.',
+  'btn.cancel': 'Vazgeç',
+  'btn.delete': 'Sil',
   'status.windows': '{n} pencere',
   'toast.skipped': '{n} ekran atlandı: aynı monitöre birden fazla ekran atanmış',
 
@@ -207,6 +212,11 @@ const en: Record<TKey, string> = {
   'screen.name': 'Screen name',
   'screen.nameDesc': 'Only shown in the tab',
   'screen.delete': 'Delete this screen',
+  'confirm.deleteTitle': 'Delete this screen?',
+  'confirm.deleteBody':
+    '"{name}" is a saved screen. Once you delete it and press Save, its layout and zone addresses are removed permanently.',
+  'btn.cancel': 'Cancel',
+  'btn.delete': 'Delete',
   'status.windows': '{n} windows',
   'toast.skipped': '{n} screen(s) skipped: several screens target the same monitor',
 
@@ -335,6 +345,11 @@ const de: Record<TKey, string> = {
   'screen.name': 'Bildschirmname',
   'screen.nameDesc': 'Nur im Tab sichtbar',
   'screen.delete': 'Diesen Bildschirm löschen',
+  'confirm.deleteTitle': 'Bildschirm löschen?',
+  'confirm.deleteBody':
+    '„{name}“ ist ein gespeicherter Bildschirm. Nach dem Löschen und Speichern werden Layout und Bereichsadressen dauerhaft entfernt.',
+  'btn.cancel': 'Abbrechen',
+  'btn.delete': 'Löschen',
   'status.windows': '{n} Fenster',
   'toast.skipped': '{n} Bildschirm(e) übersprungen: mehrere Bildschirme zielen auf denselben Monitor',
 

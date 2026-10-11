@@ -336,19 +336,66 @@ describe('App - multiple screens', () => {
     expect(screen.getByText('Aynı monitör başka bir ekrana atanmış')).toBeInTheDocument()
   })
 
-  it('with two screens delete buttons sit in the tab bar and the settings card; removes the active screen', async () => {
+  it('deleting a saved screen asks for confirmation; Cancel keeps it', async () => {
     const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
     await renderApp({ screens: [screen1, s2] })
     await user().click(tab(/Checkout/))
     const buttons = screen.getAllByRole('button', { name: 'Bu ekranı sil' })
     expect(buttons).toHaveLength(2)
     await user().click(buttons[0])
+
+    const dialog = screen.getByRole('dialog', { name: 'Ekran silinsin mi?' })
+    expect(dialog).toHaveTextContent('"Checkout" kaydedilmiş bir ekran')
+    expect(screen.getAllByRole('tab')).toHaveLength(2)
+
+    await user().click(within(dialog).getByRole('button', { name: 'Vazgeç' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('tab')).toHaveLength(2)
+    expect(screen.queryByText('Kaydedilmemiş değişiklikler')).not.toBeInTheDocument()
+  })
+
+  it('confirming Delete removes the saved screen', async () => {
+    const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
+    await renderApp({ screens: [screen1, s2] })
+    await user().click(tab(/Checkout/))
+    await user().click(screen.getAllByRole('button', { name: 'Bu ekranı sil' })[1])
+    await user().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Sil' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     const tabs = screen.getAllByRole('tab')
     expect(tabs).toHaveLength(1)
     expect(tabs[0]).toHaveTextContent('Ekran 1')
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
     expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
     expect(screen.getByText('Kaydedilmemiş değişiklikler')).toBeInTheDocument()
+  })
+
+  it('the Escape key closes the confirmation', async () => {
+    const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
+    await renderApp({ screens: [screen1, s2] })
+    await user().click(screen.getAllByRole('button', { name: 'Bu ekranı sil' })[0])
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    await user().keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('tab')).toHaveLength(2)
+  })
+
+  it('a not-yet-saved (newly added) screen is deleted without confirmation', async () => {
+    await renderApp()
+    await user().click(screen.getByRole('button', { name: 'Ekran ekle' }))
+    expect(screen.getAllByRole('tab')).toHaveLength(2)
+    await user().click(screen.getAllByRole('button', { name: 'Bu ekranı sil' })[0])
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('tab')).toHaveLength(1)
+  })
+
+  it('after Save a new screen counts as saved and asks for confirmation', async () => {
+    await renderApp()
+    await user().click(screen.getByRole('button', { name: 'Ekran ekle' }))
+    await user().click(screen.getByRole('button', { name: 'Kaydet' }))
+    await screen.findByRole('status')
+    await user().click(screen.getAllByRole('button', { name: 'Bu ekranı sil' })[0])
+    expect(screen.getByRole('dialog')).toHaveTextContent('"Ekran 2" kaydedilmiş bir ekran')
   })
 
   it('shows the window count when the player runs with several windows', async () => {
