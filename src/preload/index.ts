@@ -30,7 +30,9 @@ const api = {
   importConfig: (): Promise<ImportResult> => ipcRenderer.invoke('config:import'),
   getLayouts: (): Promise<Layout[]> => ipcRenderer.invoke('layouts:get'),
   getDisplays: (): Promise<DisplayInfo[]> => ipcRenderer.invoke('displays:get'),
-  startPlayer: (cfg: AppConfig): Promise<PlayerStatus> => ipcRenderer.invoke('player:start', cfg),
+  /** Opens only those screens when screenIds is given; all of them otherwise */
+  startPlayer: (cfg: AppConfig, screenIds?: string[]): Promise<PlayerStatus> =>
+    ipcRenderer.invoke('player:start', cfg, screenIds),
   stopPlayer: (): Promise<PlayerStatus> => ipcRenderer.invoke('player:stop'),
   reloadPlayer: (): Promise<void> => ipcRenderer.invoke('player:reload'),
   getStatus: (): Promise<PlayerStatus> => ipcRenderer.invoke('player:status'),

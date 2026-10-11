@@ -73,6 +73,8 @@ export interface PlayerStatus {
   running: boolean
   /** number of open player windows */
   windows: number
+  /** ids of screens that currently have an open window */
+  active: string[]
   /** screen ids skipped because their monitor was already taken */
   skipped: string[]
 }

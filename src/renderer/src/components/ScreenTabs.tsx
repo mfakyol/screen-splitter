@@ -1,16 +1,20 @@
 import type React from 'react'
 import type { DisplayInfo, ScreenConfig } from '../../../shared/types'
 import type { TFn } from '../pageProps'
-import { IconMonitor, IconPlus, IconTrash } from './Icons'
+import { IconMonitor, IconPlay, IconPlus, IconTrash } from './Icons'
 
 interface Props {
   screens: ScreenConfig[]
   displays: DisplayInfo[]
   activeId: string
+  /** Screens that currently have an open window */
+  playingIds: string[]
   onSelect: (id: string) => void
   onAdd: () => void
   /** Deletes the active screen; hidden when there is only one screen */
   onDelete: () => void
+  /** Starts only the active screen */
+  onStartOne: () => void
   t: TFn
 }
 
@@ -40,9 +44,11 @@ export default function ScreenTabs({
   screens,
   displays,
   activeId,
+  playingIds,
   onSelect,
   onAdd,
   onDelete,
+  onStartOne,
   t
 }: Props): React.JSX.Element {
   const { label, conflict } = resolveTargets(screens, displays)
@@ -50,6 +56,7 @@ export default function ScreenTabs({
     <div className="screen-tabs" role="tablist" aria-label={t('section.zones')}>
       {screens.map((s) => {
         const active = s.id === activeId
+        const playing = playingIds.includes(s.id)
         const filled = s.zones.filter((z) => z.url.trim()).length
         return (
           <button
@@ -57,13 +64,18 @@ export default function ScreenTabs({
             type="button"
             role="tab"
             aria-selected={active}
-            className={'screen-tab' + (active ? ' active' : '') + (conflict.has(s.id) ? ' conflict' : '')}
+            className={
+              'screen-tab' + (active ? ' active' : '') + (conflict.has(s.id) ? ' conflict' : '') + (playing ? ' playing' : '')
+            }
             onClick={() => onSelect(s.id)}
-            title={conflict.has(s.id) ? t('screens.conflict') : undefined}
+            title={conflict.has(s.id) ? t('screens.conflict') : playing ? t('screens.playing') : undefined}
           >
             <IconMonitor />
             <span className="screen-tab-text">
-              <span className="screen-tab-name">{screenLabel(t, screens, s)}</span>
+              <span className="screen-tab-name">
+                {screenLabel(t, screens, s)}
+                {playing && <span className="playing-dot" aria-label={t('screens.playing')} />}
+              </span>
               <span className="screen-tab-meta">
                 {label.get(s.id) ?? '—'} · {filled}/{s.zones.length}
               </span>
@@ -75,12 +87,18 @@ export default function ScreenTabs({
         <IconPlus />
         <span>{t('screens.add')}</span>
       </button>
-      {screens.length > 1 && (
-        <button type="button" className="screen-tab remove" onClick={onDelete} title={t('screen.delete')}>
-          <IconTrash />
-          <span>{t('screen.delete')}</span>
+      <div className="screen-tab-actions">
+        <button type="button" className="screen-tab action" onClick={onStartOne} title={t('screens.startOne')}>
+          <IconPlay />
+          <span>{t('screens.startOne')}</span>
         </button>
-      )}
+        {screens.length > 1 && (
+          <button type="button" className="screen-tab action remove" onClick={onDelete} title={t('screen.delete')}>
+            <IconTrash />
+            <span>{t('screen.delete')}</span>
+          </button>
+        )}
+      </div>
     </div>
   )
 }

@@ -48,7 +48,7 @@ export default function App(): React.JSX.Element {
   const [config, setConfig] = useState<AppConfig | null>(null)
   const [layouts, setLayouts] = useState<Layout[]>([])
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
-  const [status, setStatus] = useState<PlayerStatus>({ running: false, windows: 0, skipped: [] })
+  const [status, setStatus] = useState<PlayerStatus>({ running: false, windows: 0, active: [], skipped: [] })
   const [page, setPage] = useState<PageId>('screens')
   const [activeScreenId, setActiveScreenId] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
@@ -175,20 +175,23 @@ export default function App(): React.JSX.Element {
     }
   }
 
-  const start = async (): Promise<void> => {
+  /** Starts only those screens when only is given, otherwise every screen */
+  const start = async (only?: string[]): Promise<void> => {
     if (!config) return
-    if (!hasContent(config)) {
+    const target = only ? config.screens.filter((s) => only.includes(s.id)) : config.screens
+    if (!target.some((s) => s.zones.some((z) => z.url.trim()))) {
       setToast({ kind: 'err', text: t('toast.needUrl') })
       setPage('screens')
       return
     }
-    const st = await window.api.startPlayer(config)
+    const st = await window.api.startPlayer(config, only)
     markSaved(config)
     setDirty(false)
     setStatus(st)
     if (st.skipped.length > 0) setToast({ kind: 'err', text: t('toast.skipped', { n: st.skipped.length }) })
     else setToast({ kind: 'ok', text: t('toast.started') })
   }
+  const startAll = (): Promise<void> => start()
 
   const stop = async (): Promise<void> => setStatus(await window.api.stopPlayer())
   const refreshDisplays = async (): Promise<void> => setDisplays(await window.api.getDisplays())
@@ -298,12 +301,12 @@ export default function App(): React.JSX.Element {
                 <button type="button" className="btn danger" onClick={stop}>
                   <IconStop /> {t('btn.stop')}
                 </button>
-                <button type="button" className="btn primary" onClick={start}>
+                <button type="button" className="btn primary" onClick={startAll}>
                   <IconPlay /> {t('btn.restart')}
                 </button>
               </>
             ) : (
-              <button type="button" className="btn primary" onClick={start}>
+              <button type="button" className="btn primary" onClick={startAll}>
                 <IconPlay /> {t('btn.start')}
               </button>
             )}
@@ -316,9 +319,11 @@ export default function App(): React.JSX.Element {
               screens={config.screens}
               displays={displays}
               activeId={activeScreen.id}
+              playingIds={status.active}
               onSelect={setActiveScreenId}
               onAdd={addScreen}
               onDelete={() => requestDelete(activeScreen.id)}
+              onStartOne={() => start([activeScreen.id])}
               t={t}
             />
           </div>

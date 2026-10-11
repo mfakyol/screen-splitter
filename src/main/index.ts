@@ -96,9 +96,9 @@ function iconPath(): string | undefined {
 }
 
 // ---------- Player ----------
-function startPlayer(cfg?: AppConfig): void {
+function startPlayer(cfg?: AppConfig, only?: string[]): void {
   const config = cfg ?? loadConfig()
-  player.start(config)
+  player.start(config, only)
   keepSettingsVisible()
   updateTray()
   broadcastStatus()
@@ -112,7 +112,12 @@ function stopPlayer(): void {
 }
 
 function status(): PlayerStatus {
-  return { running: player.running, windows: player.windowCount, skipped: player.skipped }
+  return {
+    running: player.running,
+    windows: player.windowCount,
+    active: player.activeScreenIds,
+    skipped: player.skipped
+  }
 }
 
 function broadcastStatus(): void {
@@ -193,10 +198,10 @@ function registerIpc(): void {
       primary: d.id === primary.id
     }))
   })
-  ipcMain.handle('player:start', (_e, cfg: AppConfig) => {
+  ipcMain.handle('player:start', (_e, cfg: AppConfig, only?: string[]) => {
     const saved = saveConfig(cfg)
     applyAutostart(saved.autostart)
-    startPlayer(saved)
+    startPlayer(saved, Array.isArray(only) && only.length > 0 ? only : undefined)
     return status()
   })
   ipcMain.handle('player:stop', () => {

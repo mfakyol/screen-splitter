@@ -1050,18 +1050,44 @@ kbd {
   border-color: var(--accent);
   color: var(--accent);
 }
-.screen-tab.remove {
+.screen-tab-actions {
   margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.screen-tab.action {
   border-color: transparent;
   background: transparent;
   color: var(--text-3);
   font-weight: 500;
   font-size: 13px;
 }
-.screen-tab.remove:hover {
+.screen-tab.action:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.screen-tab.action.remove:hover {
   border-color: var(--danger);
   background: var(--danger-soft);
   color: var(--danger);
+}
+.screen-tab.playing {
+  border-color: var(--ok);
+}
+.screen-tab.playing.active {
+  border-color: var(--accent);
+}
+.playing-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  margin-left: 6px;
+  vertical-align: middle;
+  box-shadow: 0 0 0 3px var(--ok-soft);
+  animation: pulse 1.6s ease-in-out infinite;
 }
 .status-sub {
   font-weight: 500;

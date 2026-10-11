@@ -231,6 +231,8 @@ class ScreenPlayer {
 export class Player {
   private players = new Map<string, ScreenPlayer>()
   private config: AppConfig | null = null
+  /** Screen filter from the last start (undefined = all) */
+  private only: string[] | undefined
   private lastSkipped: string[] = []
 
   get running(): boolean {
@@ -241,16 +243,27 @@ export class Player {
     return [...this.players.values()].filter((p) => p.running).length
   }
 
+  /** Ids of screens that have an open window */
+  get activeScreenIds(): string[] {
+    return [...this.players.entries()].filter(([, p]) => p.running).map(([id]) => id)
+  }
+
   get skipped(): string[] {
     return this.lastSkipped
   }
 
-  start(config: AppConfig): void {
+  /**
+   * Starts the player. If `only` is given, only screens with those ids open;
+   * previous windows are always closed.
+   */
+  start(config: AppConfig, only?: string[]): void {
     this.stop()
     this.config = config
+    this.only = only
+    const screens = only ? config.screens.filter((s) => only.includes(s.id)) : config.screens
     const displays = screen.getAllDisplays()
     const { assigned, skipped } = assignDisplays(
-      config.screens,
+      screens,
       displays.map((d) => d.id),
       screen.getPrimaryDisplay().id
     )
@@ -258,7 +271,7 @@ export class Player {
     for (const id of skipped) console.warn(`[player] screen ${id} skipped: monitor already assigned to another screen`)
 
     const opts: GlobalOpts = { hideCursor: config.hideCursor, language: config.language }
-    for (const scr of config.screens) {
+    for (const scr of screens) {
       const displayId = assigned.get(scr.id)
       if (displayId === undefined) continue
       const display = displays.find((d) => d.id === displayId)!
@@ -275,12 +288,13 @@ export class Player {
   /** Monitor added/removed: redistribute the windows */
   refreshDisplays(): void {
     if (!this.config || !this.running) return
-    this.start(this.config)
+    this.start(this.config, this.only)
   }
 
   stop(): void {
     this.players.forEach((p) => p.stop())
     this.players.clear()
     this.lastSkipped = []
+    this.only = undefined
   }
 }

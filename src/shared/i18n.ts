@@ -33,8 +33,8 @@ const tr = {
   'btn.save': 'Kaydet',
   'btn.reload': 'Yenile',
   'btn.stop': 'Durdur',
-  'btn.restart': 'Yeniden Başlat',
-  'btn.start': 'Oynatıcıyı Başlat',
+  'btn.restart': 'Tümünü Yeniden Başlat',
+  'btn.start': 'Tümünü Başlat',
 
   'section.preview': 'Önizleme',
   'section.layouts': 'Düzenler',
@@ -69,6 +69,8 @@ const tr = {
   'display.hideCursorDesc': 'Oynatıcı açıkken imleç görünmez',
 
   'screens.add': 'Ekran ekle',
+  'screens.startOne': 'Sadece bu ekranı başlat',
+  'screens.playing': 'Oynatılıyor',
   'screens.default': 'Ekran {n}',
   'screens.conflict': 'Aynı monitör başka bir ekrana atanmış',
   'screen.name': 'Ekran adı',
@@ -180,8 +182,8 @@ const en: Record<TKey, string> = {
   'btn.save': 'Save',
   'btn.reload': 'Reload',
   'btn.stop': 'Stop',
-  'btn.restart': 'Restart',
-  'btn.start': 'Start Player',
+  'btn.restart': 'Restart All',
+  'btn.start': 'Start All',
 
   'section.preview': 'Preview',
   'section.layouts': 'Layouts',
@@ -216,6 +218,8 @@ const en: Record<TKey, string> = {
   'display.hideCursorDesc': 'The cursor is invisible while the player runs',
 
   'screens.add': 'Add screen',
+  'screens.startOne': 'Start only this screen',
+  'screens.playing': 'Playing',
   'screens.default': 'Screen {n}',
   'screens.conflict': 'This monitor is already assigned to another screen',
   'screen.name': 'Screen name',
@@ -322,8 +326,8 @@ const de: Record<TKey, string> = {
   'btn.save': 'Speichern',
   'btn.reload': 'Neu laden',
   'btn.stop': 'Stopp',
-  'btn.restart': 'Neu starten',
-  'btn.start': 'Player starten',
+  'btn.restart': 'Alle neu starten',
+  'btn.start': 'Alle starten',
 
   'section.preview': 'Vorschau',
   'section.layouts': 'Layouts',
@@ -358,6 +362,8 @@ const de: Record<TKey, string> = {
   'display.hideCursorDesc': 'Der Zeiger ist unsichtbar, solange der Player läuft',
 
   'screens.add': 'Bildschirm hinzufügen',
+  'screens.startOne': 'Nur diesen Bildschirm starten',
+  'screens.playing': 'Läuft',
   'screens.default': 'Bildschirm {n}',
   'screens.conflict': 'Dieser Monitor ist bereits einem anderen Bildschirm zugewiesen',
   'screen.name': 'Bildschirmname',

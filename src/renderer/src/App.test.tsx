@@ -36,8 +36,8 @@ const displays: DisplayInfo[] = [
   { id: 2, label: 'TV', bounds: { x: 1920, y: 0, width: 3840, height: 2160 }, scaleFactor: 1, primary: false }
 ]
 
-const IDLE: PlayerStatus = { running: false, windows: 0, skipped: [] }
-const RUNNING: PlayerStatus = { running: true, windows: 1, skipped: [] }
+const IDLE: PlayerStatus = { running: false, windows: 0, active: [], skipped: [] }
+const RUNNING: PlayerStatus = { running: true, windows: 1, active: ['s1'], skipped: [] }
 
 type Api = Window['api']
 
@@ -133,7 +133,7 @@ describe('App - loading, language and navigation', () => {
   it('an English config renders English text', async () => {
     await renderApp({ language: 'en' })
     expect(screen.getByRole('heading', { level: 1, name: 'Screens' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Start Player' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start All' })).toBeInTheDocument()
   })
 
   it('changing the language translates the UI immediately and saves the config', async () => {
@@ -402,16 +402,63 @@ describe('App - multiple screens', () => {
   })
 
   it('shows the window count when the player runs with several windows', async () => {
-    await renderApp({}, { running: true, windows: 2, skipped: [] })
+    await renderApp({}, { running: true, windows: 2, active: ['s1', 's2'], skipped: [] })
     expect(screen.getByText('Oynatılıyor')).toBeInTheDocument()
     expect(screen.getByText('2 pencere')).toBeInTheDocument()
   })
 
   it('shows a warning toast when a screen is skipped on start', async () => {
     const api = await renderApp()
-    ;(api.startPlayer as ReturnType<typeof vi.fn>).mockResolvedValue({ running: true, windows: 1, skipped: ['s2'] })
-    await user().click(screen.getByRole('button', { name: 'Oynatıcıyı Başlat' }))
+    ;(api.startPlayer as ReturnType<typeof vi.fn>).mockResolvedValue({ running: true, windows: 1, active: ['s1'], skipped: ['s2'] })
+    await user().click(screen.getByRole('button', { name: 'Tümünü Başlat' }))
     expect(await screen.findByRole('status')).toHaveTextContent('1 ekran atlandı')
+  })
+
+  it('Start All is called without a screen filter', async () => {
+    const api = await renderApp()
+    await user().click(screen.getByRole('button', { name: 'Tümünü Başlat' }))
+    await waitFor(() => expect(api.startPlayer).toHaveBeenCalledWith(expect.anything(), undefined))
+  })
+
+  it('Start only this screen passes only the active screen id and shows a dot on the tab', async () => {
+    const s2: ScreenConfig = {
+      ...screen1,
+      id: 's2',
+      name: 'Checkout',
+      displayId: 2,
+      layoutId: 'single',
+      zones: [{ url: 'https://checkout.local', refreshSec: 0, zoom: 1, muted: true }]
+    }
+    const api = await renderApp({ screens: [screen1, s2] })
+    ;(api.startPlayer as ReturnType<typeof vi.fn>).mockResolvedValue({
+      running: true,
+      windows: 1,
+      active: ['s2'],
+      skipped: []
+    })
+    await user().click(tab(/Checkout/))
+    await user().click(screen.getByRole('button', { name: 'Sadece bu ekranı başlat' }))
+    await waitFor(() => expect(api.startPlayer).toHaveBeenCalledWith(expect.anything(), ['s2']))
+    expect(await screen.findByText('Oynatılıyor')).toBeInTheDocument()
+    expect(tab(/Checkout/)).toHaveClass('playing')
+    expect(tab(/Ekran 1/)).not.toHaveClass('playing')
+    expect(within(tab(/Checkout/)).getByLabelText('Oynatılıyor')).toBeInTheDocument()
+  })
+
+  it('Start only this screen: does not start when the screen has no URL', async () => {
+    const empty: ScreenConfig = {
+      ...screen1,
+      id: 's2',
+      name: 'Empty',
+      displayId: 2,
+      layoutId: 'single',
+      zones: [{ url: '', refreshSec: 0, zoom: 1, muted: true }]
+    }
+    const api = await renderApp({ screens: [screen1, empty] })
+    await user().click(tab(/Empty/))
+    await user().click(screen.getByRole('button', { name: 'Sadece bu ekranı başlat' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('En az bir bölgeye URL girin')
+    expect(api.startPlayer).not.toHaveBeenCalled()
   })
 })
 
@@ -436,7 +483,7 @@ describe('App - saving and player', () => {
       screens: [{ ...screen1, layoutId: 'single', zones: [{ url: '', refreshSec: 0, zoom: 1, muted: false }] }]
     })
     await goTo(/^Başlatma$/)
-    await user().click(screen.getByRole('button', { name: 'Oynatıcıyı Başlat' }))
+    await user().click(screen.getByRole('button', { name: 'Tümünü Başlat' }))
     expect(await screen.findByRole('status')).toHaveTextContent('En az bir bölgeye URL girin')
     expect(api.startPlayer).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { level: 1, name: 'Ekranlar' })).toBeInTheDocument()
@@ -444,11 +491,11 @@ describe('App - saving and player', () => {
 
   it('starts the player when there is a URL and updates the status', async () => {
     const api = await renderApp()
-    await user().click(screen.getByRole('button', { name: 'Oynatıcıyı Başlat' }))
+    await user().click(screen.getByRole('button', { name: 'Tümünü Başlat' }))
     await waitFor(() => expect(api.startPlayer).toHaveBeenCalledTimes(1))
     expect(await screen.findByText('Oynatılıyor')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Durdur' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Yeniden Başlat' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tümünü Yeniden Başlat' })).toBeInTheDocument()
   })
 
   it('Stop and Reload work while the player runs', async () => {
