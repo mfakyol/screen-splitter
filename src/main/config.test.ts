@@ -85,6 +85,20 @@ describe('normalizeConfig', () => {
     expect(normalizeConfig({ language: 'xx' as never }).language).toBe('en')
   })
 
+  it('theme and accent defaults are system/blue', () => {
+    const cfg = normalizeConfig({})
+    expect(cfg.theme).toBe('system')
+    expect(cfg.accent).toBe('blue')
+  })
+
+  it('keeps a valid theme/accent and resets invalid ones to the defaults', () => {
+    expect(normalizeConfig({ theme: 'dark', accent: 'rose' })).toMatchObject({ theme: 'dark', accent: 'rose' })
+    expect(normalizeConfig({ theme: 'neon' as never, accent: 'red' as never })).toMatchObject({
+      theme: 'system',
+      accent: 'blue'
+    })
+  })
+
   it('DEFAULT_CONFIG is not mutated', () => {
     const before = JSON.stringify(DEFAULT_CONFIG)
     const cfg = normalizeConfig({ layoutId: 'grid-3x3' })

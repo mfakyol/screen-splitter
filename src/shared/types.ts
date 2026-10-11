@@ -1,4 +1,5 @@
 import type { Lang } from './i18n'
+import type { AccentId, ThemeMode } from './theme'
 
 export interface Rect {
   /** fractions between 0..1 */
@@ -26,6 +27,10 @@ export interface Zone {
 export interface AppConfig {
   /** UI language */
   language: Lang
+  /** Settings window theme */
+  theme: ThemeMode
+  /** Accent color */
+  accent: AccentId
   layoutId: string
   zones: Zone[]
   /** Electron display id; null = primary display */

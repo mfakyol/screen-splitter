@@ -4,11 +4,14 @@ import { dirname, join } from 'path'
 import type { AppConfig, Zone } from '../shared/types'
 import { getLayout } from '../shared/layouts'
 import { isLang, langFromLocale } from '../shared/i18n'
+import { DEFAULT_ACCENT, DEFAULT_THEME, isAccentId, isThemeMode } from '../shared/theme'
 
 export const DEFAULT_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: false }
 
 export const DEFAULT_CONFIG: AppConfig = {
   language: 'en',
+  theme: DEFAULT_THEME,
+  accent: DEFAULT_ACCENT,
   layoutId: 'single',
   zones: [{ ...DEFAULT_ZONE }],
   displayId: null,
@@ -27,6 +30,8 @@ export function normalizeConfig(raw: Partial<AppConfig>): AppConfig {
   // Pick the system language when the setting is missing or invalid (first run).
   // Use the value from the user's file, not the 'en' in DEFAULT_CONFIG.
   cfg.language = isLang(raw.language) ? raw.language : langFromLocale(app.getLocale())
+  if (!isThemeMode(cfg.theme)) cfg.theme = DEFAULT_THEME
+  if (!isAccentId(cfg.accent)) cfg.accent = DEFAULT_ACCENT
   const layout = getLayout(cfg.layoutId)
   cfg.layoutId = layout.id
   const zones: Zone[] = []
