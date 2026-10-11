@@ -3,13 +3,11 @@ import type { AppConfig, DisplayInfo, Layout, PlayerStatus, ScreenConfig } from 
 import { t as translate, type Lang, type TKey } from '../../shared/i18n'
 import type { TFn } from './pageProps'
 import { useTheme } from './useTheme'
-import LayoutPage from './pages/LayoutPage'
-import DisplayPage from './pages/DisplayPage'
+import ScreensPage from './pages/ScreensPage'
 import StartupPage from './pages/StartupPage'
 import AppearancePage from './pages/AppearancePage'
 import ScreenTabs from './components/ScreenTabs'
 import {
-  IconLayout,
   IconMonitor,
   IconPower,
   IconPalette,
@@ -21,16 +19,13 @@ import {
   Logo
 } from './components/Icons'
 
-type PageId = 'layout' | 'display' | 'startup' | 'appearance'
+type PageId = 'screens' | 'startup' | 'appearance'
 
 const NAV: { id: PageId; label: TKey; desc: TKey; icon: React.ReactNode }[] = [
-  { id: 'layout', label: 'nav.layout', desc: 'page.layout.desc', icon: <IconLayout /> },
-  { id: 'display', label: 'nav.display', desc: 'page.display.desc', icon: <IconMonitor /> },
+  { id: 'screens', label: 'nav.screens', desc: 'page.screens.desc', icon: <IconMonitor /> },
   { id: 'startup', label: 'nav.startup', desc: 'page.startup.desc', icon: <IconPower /> },
   { id: 'appearance', label: 'nav.appearance', desc: 'page.appearance.desc', icon: <IconPalette /> }
 ]
-
-const PAGES_WITH_SCREENS: PageId[] = ['layout', 'display']
 
 type Toast = { kind: 'ok' | 'err'; text: string } | null
 
@@ -52,7 +47,7 @@ export default function App(): React.JSX.Element {
   const [layouts, setLayouts] = useState<Layout[]>([])
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
   const [status, setStatus] = useState<PlayerStatus>({ running: false, windows: 0, skipped: [] })
-  const [page, setPage] = useState<PageId>('layout')
+  const [page, setPage] = useState<PageId>('screens')
   const [activeScreenId, setActiveScreenId] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const [toast, setToast] = useState<Toast>(null)
@@ -162,7 +157,7 @@ export default function App(): React.JSX.Element {
     if (!config) return
     if (!hasContent(config)) {
       setToast({ kind: 'err', text: t('toast.needUrl') })
-      setPage('layout')
+      setPage('screens')
       return
     }
     const st = await window.api.startPlayer(config)
@@ -186,10 +181,6 @@ export default function App(): React.JSX.Element {
 
   const current = NAV.find((n) => n.id === page) ?? NAV[0]
   const pageProps = { config, t, update, applyNow }
-  const screenProps = {
-    screen: activeScreen,
-    updateScreen: (patch: Partial<ScreenConfig>) => updateScreen(activeScreen.id, patch)
-  }
 
   return (
     <div className="app">
@@ -264,7 +255,7 @@ export default function App(): React.JSX.Element {
           </div>
         </header>
 
-        {PAGES_WITH_SCREENS.includes(page) && (
+        {page === 'screens' && (
           <div className="screen-tabs-bar">
             <ScreenTabs
               screens={config.screens}
@@ -279,11 +270,13 @@ export default function App(): React.JSX.Element {
         )}
 
         <div className="page-body">
-          {page === 'layout' && <LayoutPage {...pageProps} {...screenProps} layouts={layouts} layout={layout} />}
-          {page === 'display' && (
-            <DisplayPage
+          {page === 'screens' && (
+            <ScreensPage
               {...pageProps}
-              {...screenProps}
+              screen={activeScreen}
+              updateScreen={(patch) => updateScreen(activeScreen.id, patch)}
+              layouts={layouts}
+              layout={layout}
               displays={displays}
               onRefreshDisplays={refreshDisplays}
               canDelete={config.screens.length > 1}

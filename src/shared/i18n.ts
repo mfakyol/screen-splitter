@@ -14,14 +14,16 @@ const tr = {
   'app.settingsTitle': 'Ekran Bölücü - Ayarlar',
   'app.loading': 'Yükleniyor…',
 
-  'nav.layout': 'Düzen & Bölgeler',
-  'nav.display': 'Ekran',
+  'nav.screens': 'Ekranlar',
   'nav.startup': 'Başlatma',
   'nav.appearance': 'Görünüm',
 
-  'page.layout.desc': 'Ekranı nasıl böleceğinizi seçin ve her bölgeye bir web adresi verin.',
-  'page.display.desc': 'Oynatıcının hangi ekranda ve nasıl görüneceğini ayarlayın.',
-  'page.startup.desc': 'Uygulamanın Windows ile birlikte nasıl açılacağını belirleyin.',
+  'page.screens.desc': 'Her ekran için monitörü, düzeni ve bölgelerin web adreslerini belirleyin.',
+  'page.startup.desc': 'Uygulamanın Windows ile birlikte nasıl açılacağını ve oynatıcı davranışını belirleyin.',
+
+  'section.monitor': 'Monitör',
+  'section.screenSettings': 'Ekran ayarları',
+  'section.player': 'Oynatıcı',
   'page.appearance.desc': 'Ayar penceresinin tema, renk ve dil tercihleri.',
 
   'status.running': 'Oynatılıyor',
@@ -145,14 +147,16 @@ const en: Record<TKey, string> = {
   'app.settingsTitle': 'Screen Splitter - Settings',
   'app.loading': 'Loading…',
 
-  'nav.layout': 'Layout & Zones',
-  'nav.display': 'Display',
+  'nav.screens': 'Screens',
   'nav.startup': 'Startup',
   'nav.appearance': 'Appearance',
 
-  'page.layout.desc': 'Choose how to split the screen and give each zone a web address.',
-  'page.display.desc': 'Pick the display the player runs on and how it looks.',
-  'page.startup.desc': 'Decide how the app launches together with Windows.',
+  'page.screens.desc': 'For each screen, pick the monitor, the layout and the web address of every zone.',
+  'page.startup.desc': 'Decide how the app launches with Windows and how the player behaves.',
+
+  'section.monitor': 'Monitor',
+  'section.screenSettings': 'Screen settings',
+  'section.player': 'Player',
   'page.appearance.desc': 'Theme, color and language preferences for the settings window.',
 
   'status.running': 'Playing',
@@ -271,14 +275,16 @@ const de: Record<TKey, string> = {
   'app.settingsTitle': 'Bildschirmteiler - Einstellungen',
   'app.loading': 'Wird geladen…',
 
-  'nav.layout': 'Layout & Bereiche',
-  'nav.display': 'Bildschirm',
+  'nav.screens': 'Bildschirme',
   'nav.startup': 'Start',
   'nav.appearance': 'Darstellung',
 
-  'page.layout.desc': 'Wählen Sie die Aufteilung und geben Sie jedem Bereich eine Webadresse.',
-  'page.display.desc': 'Legen Sie fest, auf welchem Bildschirm der Player läuft und wie er aussieht.',
-  'page.startup.desc': 'Bestimmen Sie, wie die App zusammen mit Windows startet.',
+  'page.screens.desc': 'Legen Sie je Bildschirm Monitor, Layout und die Webadressen der Bereiche fest.',
+  'page.startup.desc': 'Bestimmen Sie, wie die App mit Windows startet und wie sich der Player verhält.',
+
+  'section.monitor': 'Monitor',
+  'section.screenSettings': 'Bildschirmeinstellungen',
+  'section.player': 'Player',
   'page.appearance.desc': 'Thema, Farbe und Sprache des Einstellungsfensters.',
 
   'status.running': 'Läuft',

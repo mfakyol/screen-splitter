@@ -838,6 +838,20 @@ input[type='color'] {
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 10px;
 }
+.display-grid.compact {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.display-grid.compact .display-shape {
+  height: 48px;
+  margin-bottom: 6px;
+}
+.card.stacked > .field + .field,
+.card.stacked > .field + .btn {
+  margin-top: 4px;
+}
+.card.stacked .btn {
+  align-self: flex-start;
+}
 .display-card {
   position: relative;
   display: flex;

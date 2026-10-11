@@ -19,7 +19,7 @@ It starts automatically with Windows.
 - Windows are redistributed when monitors are plugged in or removed
 - Languages: English, Turkish, German (picked from the system locale on first run, changeable on the Appearance page)
 - Theme: System / Light / Dark plus six accent colors, applied and saved instantly
-- Settings UI with left navigation: Layout & Zones, Display, Startup, Appearance
+- Settings UI with left navigation: Screens (monitor, preview, zones, layouts and screen settings grouped on one page), Startup, Appearance
 - **Multiple screens:** each monitor gets its own layout and zones, with one kiosk window per monitor. If two screens target the same monitor the second is skipped with a warning
 - While the player runs, the settings window stays above the kiosk windows and moves to a free monitor if there is one
 - A legacy single-screen `config.json` is migrated to the new `screens` format on first launch

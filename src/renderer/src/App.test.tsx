@@ -97,21 +97,21 @@ declare global {
 }
 
 describe('App - loading, language and navigation', () => {
-  it('shows loading, then opens the first page in the selected language', async () => {
+  it('shows loading, then opens the Screens page in the selected language', async () => {
     mockApi()
     render(<App />)
     expect(screen.getByText('Loading…')).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { level: 1, name: 'Düzen & Bölgeler' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ekranlar' })).toBeInTheDocument()
     expect(screen.getByText('Ekran Bölücü')).toBeInTheDocument()
     expect(screen.getByText('Durduruldu')).toBeInTheDocument()
     expect(document.title).toBe('Ekran Bölücü - Ayarlar')
     expect(document.documentElement.lang).toBe('tr')
   })
 
-  it('the left menu switches between pages', async () => {
+  it('the left menu has three pages and switches between them', async () => {
     await renderApp()
-    await goTo(/^Ekran$/)
-    expect(screen.getByRole('heading', { level: 1, name: 'Ekran' })).toBeInTheDocument()
+    const nav = screen.getByRole('navigation')
+    expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['Ekranlar', 'Başlatma', 'Görünüm'])
     await goTo(/^Başlatma$/)
     expect(screen.getByRole('heading', { level: 1, name: 'Başlatma' })).toBeInTheDocument()
     await goTo(/^Görünüm$/)
@@ -119,18 +119,18 @@ describe('App - loading, language and navigation', () => {
     expect(screen.getByRole('button', { name: /^Görünüm$/ })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('screen tabs show only on the layout and display pages', async () => {
+  it('screen tabs show only on the Screens page', async () => {
     await renderApp()
-    expect(screen.getByRole('tablist')).toBeInTheDocument()
-    await goTo(/^Ekran$/)
     expect(screen.getByRole('tablist')).toBeInTheDocument()
     await goTo(/^Başlatma$/)
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+    await goTo(/^Ekranlar$/)
+    expect(screen.getByRole('tablist')).toBeInTheDocument()
   })
 
   it('an English config renders English text', async () => {
     await renderApp({ language: 'en' })
-    expect(screen.getByRole('heading', { level: 1, name: 'Layout & Zones' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Screens' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start Player' })).toBeInTheDocument()
   })
 
@@ -173,7 +173,41 @@ describe('App - theme', () => {
   })
 })
 
-describe('App - layout and zones', () => {
+describe('App - Screens page: groups', () => {
+  it('Monitor, Preview, Zones, Layouts and Screen settings groups are on the same page', async () => {
+    await renderApp()
+    for (const title of ['Monitör', 'Önizleme', 'Bölgeler', 'Düzenler', 'Ekran ayarları']) {
+      expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument()
+    }
+  })
+
+  it('lists monitor cards with the primary tag and the automatic option', async () => {
+    await renderApp()
+    const group = screen.getByRole('radiogroup', { name: 'Hedef ekran' })
+    expect(within(group).getAllByRole('radio')).toHaveLength(3)
+    expect(within(group).getByRole('radio', { name: /Otomatik/ })).toHaveAttribute('aria-checked', 'true')
+    expect(within(group).getByRole('radio', { name: /Display 1.*1920×1080.*Birincil/ })).toBeInTheDocument()
+    expect(within(group).getByRole('radio', { name: /TV.*3840×2160/ })).toBeInTheDocument()
+  })
+
+  it('monitor selection is written to the active screen and shows in the tab', async () => {
+    const api = await renderApp()
+    await user().click(screen.getByRole('radio', { name: /^TV/ }))
+    expect(tab(/Ekran 1/)).toHaveTextContent('TV')
+    await user().click(screen.getByRole('button', { name: 'Kaydet' }))
+    await waitFor(() =>
+      expect(api.saveConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ screens: [expect.objectContaining({ id: 's1', displayId: 2 })] })
+      )
+    )
+  })
+
+  it('the refresh displays button requests the list again', async () => {
+    const api = await renderApp()
+    await user().click(screen.getByRole('button', { name: 'Ekranları yenile' }))
+    expect(api.getDisplays).toHaveBeenCalledTimes(2)
+  })
+
   it('lists every layout and marks the selected one', async () => {
     await renderApp()
     const group = screen.getByRole('radiogroup', { name: 'Düzenler' })
@@ -185,7 +219,6 @@ describe('App - layout and zones', () => {
     await renderApp()
     expect(screen.getByRole('article', { name: 'Bölge 1' })).toBeInTheDocument()
     expect(screen.getByRole('article', { name: 'Bölge 2' })).toBeInTheDocument()
-    expect(screen.queryByRole('article', { name: 'Bölge 3' })).not.toBeInTheDocument()
     expect(within(screen.getByRole('article', { name: 'Bölge 1' })).getByText('Hazır')).toBeInTheDocument()
     expect(within(screen.getByRole('article', { name: 'Bölge 2' })).getByText('Boş')).toBeInTheDocument()
   })
@@ -222,10 +255,24 @@ describe('App - layout and zones', () => {
     await user().click(zones[1] as Element)
     expect(screen.getByLabelText('Bölge 2 URL')).toHaveFocus()
   })
+
+  it('screen name, gap and background are edited on the same page', async () => {
+    await renderApp()
+    const name = screen.getByLabelText('Ekran adı')
+    expect(name).toHaveAttribute('placeholder', 'Ekran 1')
+    await user().type(name, 'Left TV')
+    expect(tab(/Left TV/)).toBeInTheDocument()
+
+    const gap = screen.getByLabelText('Bölge arası boşluk')
+    await user().clear(gap)
+    await user().type(gap, '12')
+    expect(gap).toHaveValue(12)
+    expect(screen.getByText('#000000')).toBeInTheDocument()
+  })
 })
 
 describe('App - multiple screens', () => {
-  it('a single-screen config shows one default-named tab and an add button', async () => {
+  it('a single-screen config shows one default-named tab, an add button and no delete', async () => {
     await renderApp()
     const tabs = screen.getAllByRole('tab')
     expect(tabs).toHaveLength(1)
@@ -233,6 +280,7 @@ describe('App - multiple screens', () => {
     expect(tabs[0]).toHaveTextContent('1/2')
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('button', { name: 'Ekran ekle' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
   })
 
   it('add screen: picks a free monitor, activates the new tab, marks unsaved', async () => {
@@ -243,19 +291,21 @@ describe('App - multiple screens', () => {
     expect(tabs[1]).toHaveAttribute('aria-selected', 'true')
     expect(tabs[1]).toHaveTextContent('Ekran 2')
     expect(tabs[1]).toHaveTextContent('TV')
-    // the new screen is empty; the layout is single
     expect(screen.getAllByRole('article')).toHaveLength(1)
+    expect(screen.getByRole('radio', { name: /^TV/ })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByText('Kaydedilmemiş değişiklikler')).toBeInTheDocument()
 
     await user().click(screen.getByRole('button', { name: 'Kaydet' }))
     await waitFor(() =>
       expect(api.saveConfig).toHaveBeenCalledWith(
-        expect.objectContaining({ screens: [expect.objectContaining({ id: 's1' }), expect.objectContaining({ displayId: 2 })] })
+        expect.objectContaining({
+          screens: [expect.objectContaining({ id: 's1' }), expect.objectContaining({ displayId: 2 })]
+        })
       )
     )
   })
 
-  it('switching tabs shows the zones of each screen', async () => {
+  it('switching tabs shows the zones and monitor of each screen', async () => {
     const s2: ScreenConfig = {
       ...screen1,
       id: 's2',
@@ -265,25 +315,16 @@ describe('App - multiple screens', () => {
       zones: [{ url: 'https://checkout.local', refreshSec: 0, zoom: 1, muted: false }]
     }
     await renderApp({ screens: [screen1, s2] })
-    expect(screen.getAllByRole('tab')).toHaveLength(2)
     expect(screen.getByLabelText('Bölge 1 URL')).toHaveValue('https://a.com')
 
     await user().click(tab(/Checkout/))
     expect(screen.getAllByRole('article')).toHaveLength(1)
     expect(screen.getByLabelText('Bölge 1 URL')).toHaveValue('https://checkout.local')
+    expect(screen.getByRole('radio', { name: /^TV/ })).toHaveAttribute('aria-checked', 'true')
     expect(within(screen.getByRole('radiogroup', { name: 'Düzenler' })).getByRole('radio', { name: 'Tek Ekran' })).toHaveAttribute(
       'aria-checked',
       'true'
     )
-  })
-
-  it('the screen name is editable and shows in the tab', async () => {
-    await renderApp()
-    await goTo(/^Ekran$/)
-    const name = screen.getByLabelText('Ekran adı')
-    expect(name).toHaveAttribute('placeholder', 'Ekran 1')
-    await user().type(name, 'Left TV')
-    expect(tab(/Left TV/)).toBeInTheDocument()
   })
 
   it('a second screen on the same monitor gets a warning', async () => {
@@ -292,40 +333,22 @@ describe('App - multiple screens', () => {
     const second = screen.getAllByRole('tab')[1]
     expect(second).toHaveClass('conflict')
     await user().click(second)
-    await goTo(/^Ekran$/)
     expect(screen.getByText('Aynı monitör başka bir ekrana atanmış')).toBeInTheDocument()
   })
 
-  it('no delete button at all with a single screen', async () => {
-    await renderApp()
-    expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
-    await goTo(/^Ekran$/)
-    expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
-  })
-
-  it('with two screens the tab bar delete button removes the active screen', async () => {
+  it('with two screens delete buttons sit in the tab bar and the settings card; removes the active screen', async () => {
     const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
     await renderApp({ screens: [screen1, s2] })
     await user().click(tab(/Checkout/))
-    // On the layout page, a single delete button in the tab bar
-    await user().click(screen.getByRole('button', { name: 'Bu ekranı sil' }))
+    const buttons = screen.getAllByRole('button', { name: 'Bu ekranı sil' })
+    expect(buttons).toHaveLength(2)
+    await user().click(buttons[0])
     const tabs = screen.getAllByRole('tab')
     expect(tabs).toHaveLength(1)
     expect(tabs[0]).toHaveTextContent('Ekran 1')
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true')
     expect(screen.queryByRole('button', { name: 'Bu ekranı sil' })).not.toBeInTheDocument()
     expect(screen.getByText('Kaydedilmemiş değişiklikler')).toBeInTheDocument()
-  })
-
-  it('the display page has delete buttons in both the tab bar and the card', async () => {
-    const s2: ScreenConfig = { ...screen1, id: 's2', name: 'Checkout', displayId: 2 }
-    await renderApp({ screens: [screen1, s2] })
-    await goTo(/^Ekran$/)
-    const buttons = screen.getAllByRole('button', { name: 'Bu ekranı sil' })
-    expect(buttons).toHaveLength(2)
-    await user().click(buttons[1])
-    expect(screen.getAllByRole('tab')).toHaveLength(1)
-    expect(screen.getAllByRole('tab')[0]).toHaveTextContent('Checkout')
   })
 
   it('shows the window count when the player runs with several windows', async () => {
@@ -348,7 +371,7 @@ describe('App - saving and player', () => {
     const save = screen.getByRole('button', { name: 'Kaydet' })
     expect(save).toBeDisabled()
 
-    await goTo(/^Ekran$/)
+    await goTo(/^Başlatma$/)
     await user().click(screen.getByRole('switch', { name: 'Fare imlecini gizle' }))
     expect(save).toBeEnabled()
 
@@ -358,7 +381,7 @@ describe('App - saving and player', () => {
     expect(save).toBeDisabled()
   })
 
-  it('does not start without any URL, warns and returns to the layout page', async () => {
+  it('does not start without any URL, warns and returns to the Screens page', async () => {
     const api = await renderApp({
       screens: [{ ...screen1, layoutId: 'single', zones: [{ url: '', refreshSec: 0, zoom: 1, muted: false }] }]
     })
@@ -366,7 +389,7 @@ describe('App - saving and player', () => {
     await user().click(screen.getByRole('button', { name: 'Oynatıcıyı Başlat' }))
     expect(await screen.findByRole('status')).toHaveTextContent('En az bir bölgeye URL girin')
     expect(api.startPlayer).not.toHaveBeenCalled()
-    expect(screen.getByRole('heading', { level: 1, name: 'Düzen & Bölgeler' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Ekranlar' })).toBeInTheDocument()
   })
 
   it('starts the player when there is a URL and updates the status', async () => {
@@ -393,50 +416,8 @@ describe('App - saving and player', () => {
   })
 })
 
-describe('App - display page', () => {
-  it('lists monitor cards with the primary tag and the automatic option', async () => {
-    await renderApp()
-    await goTo(/^Ekran$/)
-    const group = screen.getByRole('radiogroup', { name: 'Hedef ekran' })
-    expect(within(group).getAllByRole('radio')).toHaveLength(3)
-    expect(within(group).getByRole('radio', { name: /Otomatik/ })).toHaveAttribute('aria-checked', 'true')
-    expect(within(group).getByRole('radio', { name: /Display 1.*1920×1080.*Birincil/ })).toBeInTheDocument()
-    expect(within(group).getByRole('radio', { name: /TV.*3840×2160/ })).toBeInTheDocument()
-  })
-
-  it('monitor selection is written to the active screen displayId', async () => {
-    const api = await renderApp()
-    await goTo(/^Ekran$/)
-    await user().click(screen.getByRole('radio', { name: /^TV/ }))
-    expect(tab(/Ekran 1/)).toHaveTextContent('TV')
-    await user().click(screen.getByRole('button', { name: 'Kaydet' }))
-    await waitFor(() =>
-      expect(api.saveConfig).toHaveBeenCalledWith(
-        expect.objectContaining({ screens: [expect.objectContaining({ id: 's1', displayId: 2 })] })
-      )
-    )
-  })
-
-  it('the refresh displays button requests the list again', async () => {
-    const api = await renderApp()
-    await goTo(/^Ekran$/)
-    await user().click(screen.getByRole('button', { name: 'Ekranları yenile' }))
-    expect(api.getDisplays).toHaveBeenCalledTimes(2)
-  })
-
-  it('gap and background are edited per screen', async () => {
-    await renderApp()
-    await goTo(/^Ekran$/)
-    const gap = screen.getByLabelText('Bölge arası boşluk')
-    await user().clear(gap)
-    await user().type(gap, '12')
-    expect(gap).toHaveValue(12)
-    expect(screen.getByText('#000000')).toBeInTheDocument()
-  })
-})
-
 describe('App - startup page', () => {
-  it('switches match the config and can be toggled', async () => {
+  it('switches match the config and can be toggled; cursor hiding lives here', async () => {
     await renderApp({ autostart: true })
     await goTo(/^Başlatma$/)
     const autostart = screen.getByRole('switch', { name: 'Windows açılışında başlat' })
@@ -445,6 +426,8 @@ describe('App - startup page', () => {
     expect(autoplay).not.toBeChecked()
     await user().click(autoplay)
     expect(autoplay).toBeChecked()
+    expect(screen.getByRole('heading', { level: 2, name: 'Oynatıcı' })).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Fare imlecini gizle' })).toBeChecked()
   })
 
   it('warns in development mode with autostart on, not in the packaged build', async () => {

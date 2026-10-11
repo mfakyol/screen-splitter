@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import type { Layout, ScreenConfig, Zone } from '../../../shared/types'
+import type { DisplayInfo, Layout, ScreenConfig, Zone } from '../../../shared/types'
 import { layoutName } from '../../../shared/i18n'
 import type { PageProps } from '../pageProps'
 import LayoutPreview from '../LayoutPreview'
 import { Card } from '../components/Card'
 import Switch from '../components/Switch'
-import { IconGlobe } from '../components/Icons'
+import { IconGlobe, IconMonitor, IconRefresh, IconCheck, IconTrash } from '../components/Icons'
+import { resolveTargets } from '../components/ScreenTabs'
 
 const EMPTY_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: false }
 
@@ -14,11 +15,40 @@ interface Props extends PageProps {
   updateScreen: (patch: Partial<ScreenConfig>) => void
   layouts: Layout[]
   layout: Layout
+  displays: DisplayInfo[]
+  onRefreshDisplays: () => void
+  canDelete: boolean
+  onDelete: () => void
 }
 
-export default function LayoutPage({ config, t, screen, updateScreen, layouts, layout }: Props): React.JSX.Element {
+/** Mini rectangle on the monitor card: keeps the aspect ratio */
+function Shape({ w, h }: { w: number; h: number }): React.JSX.Element {
+  const ratio = w / h
+  const width = ratio >= 1 ? 48 : 48 * ratio
+  const height = ratio >= 1 ? 48 / ratio : 48
+  return (
+    <span className="display-shape" aria-hidden>
+      <span style={{ width, height }} />
+    </span>
+  )
+}
+
+export default function ScreensPage({
+  config,
+  t,
+  screen,
+  updateScreen,
+  layouts,
+  layout,
+  displays,
+  onRefreshDisplays,
+  canDelete,
+  onDelete
+}: Props): React.JSX.Element {
   const [activeZone, setActiveZone] = useState<number | null>(null)
   const lang = config.language
+  const { conflict } = resolveTargets(config.screens, displays)
+  const index = config.screens.indexOf(screen)
 
   const selectLayout = (l: Layout): void => {
     const zones: Zone[] = l.zones.map((_z, i) => screen.zones[i] ?? { ...EMPTY_ZONE })
@@ -41,8 +71,63 @@ export default function LayoutPage({ config, t, screen, updateScreen, layouts, l
   const filled = screen.zones.filter((z) => z.url.trim()).length
 
   return (
-    <div className="page-grid layout-page" key={screen.id}>
+    <div className="page-grid" key={screen.id}>
       <div className="col-main">
+        {/* ---- Monitor ---- */}
+        <Card
+          title={t('section.monitor')}
+          description={t('display.targetDesc')}
+          actions={
+            <button type="button" className="btn ghost sm" onClick={onRefreshDisplays}>
+              <IconRefresh /> {t('display.refresh')}
+            </button>
+          }
+        >
+          {conflict.has(screen.id) && <p className="notice warn">{t('screens.conflict')}</p>}
+          <div className="display-grid compact" role="radiogroup" aria-label={t('display.target')}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={screen.displayId === null}
+              className={'display-card' + (screen.displayId === null ? ' selected' : '')}
+              onClick={() => updateScreen({ displayId: null })}
+            >
+              <span className="display-shape auto" aria-hidden>
+                <IconMonitor width={24} height={24} />
+              </span>
+              <span className="display-name">{t('display.auto')}</span>
+              <span className="display-meta">{t('display.autoDesc')}</span>
+              <span className="radio-check">
+                <IconCheck width={14} height={14} />
+              </span>
+            </button>
+            {displays.map((d) => {
+              const selected = screen.displayId === d.id
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className={'display-card' + (selected ? ' selected' : '')}
+                  onClick={() => updateScreen({ displayId: d.id })}
+                >
+                  <Shape w={d.bounds.width} h={d.bounds.height} />
+                  <span className="display-name">{d.label}</span>
+                  <span className="display-meta">
+                    {d.bounds.width}×{d.bounds.height}
+                    {d.primary && <span className="chip tiny">{t('display.primaryTag')}</span>}
+                  </span>
+                  <span className="radio-check">
+                    <IconCheck width={14} height={14} />
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </Card>
+
+        {/* ---- Preview ---- */}
         <Card
           title={t('section.preview')}
           description={t('zones.hint')}
@@ -60,6 +145,7 @@ export default function LayoutPage({ config, t, screen, updateScreen, layouts, l
           </div>
         </Card>
 
+        {/* ---- Zones ---- */}
         <Card
           title={t('section.zones')}
           actions={
@@ -141,6 +227,7 @@ export default function LayoutPage({ config, t, screen, updateScreen, layouts, l
       </div>
 
       <div className="col-side">
+        {/* ---- Layouts ---- */}
         <Card title={t('section.layouts')}>
           <div className="layout-grid" role="radiogroup" aria-label={t('section.layouts')}>
             {layouts.map((l) => {
@@ -161,6 +248,67 @@ export default function LayoutPage({ config, t, screen, updateScreen, layouts, l
               )
             })}
           </div>
+        </Card>
+
+        {/* ---- Screen settings ---- */}
+        <Card title={t('section.screenSettings')} className="stacked">
+          <label className="field">
+            <span className="field-label">{t('screen.name')}</span>
+            <input
+              type="text"
+              placeholder={t('screens.default', { n: index + 1 })}
+              value={screen.name}
+              onChange={(e) => updateScreen({ name: e.target.value })}
+            />
+          </label>
+
+          <div className="field">
+            <label className="field-label" htmlFor="gap-input">
+              {t('display.gap')}
+            </label>
+            <div className="range-row">
+              <input
+                type="range"
+                min={0}
+                max={60}
+                value={screen.gap}
+                aria-hidden
+                tabIndex={-1}
+                onChange={(e) => updateScreen({ gap: Number(e.target.value) })}
+              />
+              <input
+                id="gap-input"
+                className="num"
+                type="number"
+                min={0}
+                max={100}
+                value={screen.gap}
+                onChange={(e) => updateScreen({ gap: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+              />
+              <span className="unit">px</span>
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="field-label" htmlFor="bg-input">
+              {t('display.background')}
+            </label>
+            <div className="color-row">
+              <input
+                id="bg-input"
+                type="color"
+                value={screen.background}
+                onChange={(e) => updateScreen({ background: e.target.value })}
+              />
+              <code>{screen.background}</code>
+            </div>
+          </div>
+
+          {canDelete && (
+            <button type="button" className="btn danger sm" onClick={onDelete}>
+              <IconTrash /> {t('screen.delete')}
+            </button>
+          )}
         </Card>
       </div>
     </div>

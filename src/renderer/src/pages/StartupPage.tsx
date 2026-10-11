@@ -37,6 +37,17 @@ export default function StartupPage({ config, t, update, packaged }: Props): Rea
         {!packaged && config.autostart && <p className="notice warn">{t('autostart.devWarn')}</p>}
       </Card>
 
+      <Card title={t('section.player')}>
+        <div className="setting-row">
+          <Switch
+            label={t('display.hideCursor')}
+            description={t('display.hideCursorDesc')}
+            checked={config.hideCursor}
+            onChange={(hideCursor) => update({ hideCursor })}
+          />
+        </div>
+      </Card>
+
       <Card title={t('section.shortcuts')}>
         <ul className="shortcut-list">
           {SHORTCUTS.map((s) => (
