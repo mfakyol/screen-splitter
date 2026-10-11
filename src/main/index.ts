@@ -27,7 +27,7 @@ function openSettings(): void {
   if (settingsWin && !settingsWin.isDestroyed()) {
     settingsWin.show()
     settingsWin.focus()
-    keepSettingsVisible()
+    keepSettingsVisible(true)
     return
   }
   settingsWin = new BrowserWindow({
@@ -45,6 +45,8 @@ function openSettings(): void {
     }
   })
   settingsWin.on('closed', () => (settingsWin = null))
+  // A settings window raised by the shortcut drops behind the kiosk on focus loss
+  settingsWin.on('blur', () => keepSettingsVisible(false))
   settingsWin.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
@@ -55,32 +57,25 @@ function openSettings(): void {
   } else {
     settingsWin.loadFile(join(__dirname, '../renderer/index.html'))
   }
-  keepSettingsVisible()
+  keepSettingsVisible(true)
 }
 
 /**
- * While the player runs, keep the settings window from hiding under the kiosk windows:
- * it moves to a free monitor if there is one and is always raised above the kiosk layer.
+ * Sets the settings window's layer relative to the kiosk windows.
+ * - When the player starts (raise=false): settings stay put; on the same monitor
+ *   the kiosk window covers it, on another monitor it stays visible.
+ * - When opened explicitly via shortcut/tray (raise=true): raised above the
+ *   kiosk layer; on focus loss the blur listener drops it back behind.
  */
-function keepSettingsVisible(): void {
+function keepSettingsVisible(raise = false): void {
   if (!settingsWin || settingsWin.isDestroyed()) return
-  if (!player.running) {
+  if (raise && player.running) {
+    // kiosk windows sit at the 'floating' level; settings go one level above temporarily
+    settingsWin.setAlwaysOnTop(true, 'screen-saver')
+    settingsWin.moveTop()
+  } else {
     settingsWin.setAlwaysOnTop(false)
-    return
   }
-  const used = new Set(player.usedDisplayIds)
-  const current = screen.getDisplayMatching(settingsWin.getBounds())
-  if (used.has(current.id)) {
-    const free = screen.getAllDisplays().find((d) => !used.has(d.id))
-    if (free) {
-      const { x, y, width, height } = free.workArea
-      const [w, h] = settingsWin.getSize()
-      settingsWin.setPosition(Math.round(x + (width - w) / 2), Math.round(y + (height - h) / 2))
-    }
-  }
-  // kiosk windows sit at the 'floating' level; settings stay one level above
-  settingsWin.setAlwaysOnTop(true, 'screen-saver')
-  settingsWin.moveTop()
 }
 
 function iconPath(): string | undefined {

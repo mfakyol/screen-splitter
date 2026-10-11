@@ -245,16 +245,6 @@ export class Player {
     return this.lastSkipped
   }
 
-  /** Display ids covered by player windows */
-  get usedDisplayIds(): number[] {
-    const ids: number[] = []
-    for (const p of this.players.values()) {
-      const w = p.window
-      if (w) ids.push(screen.getDisplayMatching(w.getBounds()).id)
-    }
-    return ids
-  }
-
   start(config: AppConfig): void {
     this.stop()
     this.config = config
