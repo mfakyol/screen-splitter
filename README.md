@@ -17,7 +17,9 @@ It starts automatically with Windows.
 - Launch at Windows login and open straight into the player, no settings window
 - Tray icon and global shortcuts
 - Windows are redistributed when monitors are plugged in or removed
-- Languages: English, Turkish, German (picked from the system locale on first run, changeable from the top right)
+- Languages: English, Turkish, German (picked from the system locale on first run, changeable on the Appearance page)
+- Theme: System / Light / Dark plus six accent colors, applied and saved instantly
+- Settings UI with left navigation: Layout & Zones, Display, Startup, Appearance
 
 ## Adding a language
 
