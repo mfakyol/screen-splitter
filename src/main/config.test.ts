@@ -15,6 +15,8 @@ vi.mock('electron', () => ({
 
 import {
   DEFAULT_CONFIG,
+  CONFIG_SCHEMA_VERSION,
+  UnsupportedConfigError,
   normalizeConfig,
   normalizeScreen,
   hasContent,
@@ -22,6 +24,61 @@ import {
   saveConfig,
   getConfigPath
 } from './config'
+
+describe('config schema version', () => {
+  it('current version is 2', () => {
+    expect(CONFIG_SCHEMA_VERSION).toBe(2)
+    expect(DEFAULT_CONFIG.schema).toBe(2)
+  })
+
+  it('a normalized config always carries the current version', () => {
+    expect(normalizeConfig({}).schema).toBe(2)
+    expect(normalizeConfig({ schema: 1 } as never).schema).toBe(2)
+    expect(normalizeConfig({ schema: 2 }).schema).toBe(2)
+  })
+
+  it('a file without schema counts as v1 (legacy format) and migrates', () => {
+    const cfg = normalizeConfig({ layoutId: 'split-h', zones: [zone('a')] })
+    expect(cfg.schema).toBe(2)
+    expect(cfg.screens[0].layoutId).toBe('split-h')
+  })
+
+  it('a file with a higher schema throws UnsupportedConfigError', () => {
+    expect(() => normalizeConfig({ schema: 3 })).toThrow(UnsupportedConfigError)
+    try {
+      normalizeConfig({ schema: 99 })
+    } catch (e) {
+      const err = e as UnsupportedConfigError
+      expect(err.fileSchema).toBe(99)
+      expect(err.supported).toBe(2)
+      expect(err.message).toContain('v99')
+    }
+  })
+
+  it('treats invalid schema values like v1', () => {
+    expect(normalizeConfig({ schema: 'abc' as never }).schema).toBe(2)
+    expect(normalizeConfig({ schema: -4 }).schema).toBe(2)
+    expect(normalizeConfig({ schema: 0 }).schema).toBe(2)
+  })
+
+  it('loadConfig does not overwrite a newer-schema file, continues with defaults and logs', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const original = JSON.stringify({ schema: 7, foo: 'bar' })
+    writeFileSync(getConfigPath(), original, 'utf8')
+    const cfg = loadConfig()
+    expect(cfg.schema).toBe(2)
+    expect(cfg.screens).toHaveLength(1)
+    expect(readFileSync(getConfigPath(), 'utf8')).toBe(original)
+    expect(errSpy.mock.calls[0][0]).toContain('v7')
+  })
+
+  it('saveConfig writes schema to the file', () => {
+    saveConfig(normalizeConfig({}))
+    const parsed = JSON.parse(readFileSync(getConfigPath(), 'utf8'))
+    expect(parsed.schema).toBe(2)
+    expect(Object.keys(parsed)[0]).toBe('schema')
+  })
+})
 import type { ScreenConfig } from '../shared/types'
 
 // Default zone: starts muted

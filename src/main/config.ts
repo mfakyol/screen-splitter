@@ -19,7 +19,26 @@ export const DEFAULT_SCREEN: Omit<ScreenConfig, 'id'> = {
   background: '#000000'
 }
 
+/**
+ * Config file format version. Independent of the app version.
+ * 1: v0.1 flat format (layoutId/zones/displayId at the root)
+ * 2: screens[] array, theme/language fields
+ * Bump it on a breaking change and add a migration to normalizeConfig.
+ */
+export const CONFIG_SCHEMA_VERSION = 2
+
+export class UnsupportedConfigError extends Error {
+  constructor(
+    public readonly fileSchema: number,
+    public readonly supported: number = CONFIG_SCHEMA_VERSION
+  ) {
+    super(`config schema v${fileSchema} is not supported (max v${supported})`)
+    this.name = 'UnsupportedConfigError'
+  }
+}
+
 export const DEFAULT_CONFIG: AppConfig = {
+  schema: CONFIG_SCHEMA_VERSION,
   language: 'en',
   theme: DEFAULT_THEME,
   accent: DEFAULT_ACCENT,
@@ -68,7 +87,11 @@ export type RawConfig = Partial<Omit<AppConfig, 'screens'>> & { screens?: Partia
  * array, normalizes every screen and validates language/theme values.
  */
 export function normalizeConfig(raw: RawConfig): AppConfig {
-  const cfg: AppConfig = { ...DEFAULT_CONFIG, ...raw, screens: [] }
+  // Format version: a missing field means v1 (legacy flat format)
+  const fileSchema = typeof raw.schema === 'number' && raw.schema > 0 ? Math.floor(raw.schema) : 1
+  if (fileSchema > CONFIG_SCHEMA_VERSION) throw new UnsupportedConfigError(fileSchema)
+
+  const cfg: AppConfig = { ...DEFAULT_CONFIG, ...raw, screens: [], schema: CONFIG_SCHEMA_VERSION }
   cfg.language = isLang(raw.language) ? raw.language : langFromLocale(app.getLocale())
   if (!isThemeMode(cfg.theme)) cfg.theme = DEFAULT_THEME
   if (!isAccentId(cfg.accent)) cfg.accent = DEFAULT_ACCENT
@@ -115,7 +138,12 @@ export function loadConfig(): AppConfig {
     if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
     return normalizeConfig(JSON.parse(text))
   } catch (err) {
-    console.error('could not read config, using defaults', err)
+    if (err instanceof UnsupportedConfigError) {
+      // The file comes from a newer app; leave it untouched so it is not overwritten
+      console.error(`config.json ${err.message}; please update the app. Continuing with default settings.`)
+    } else {
+      console.error('could not read config, using defaults', err)
+    }
     return normalizeConfig({})
   }
 }

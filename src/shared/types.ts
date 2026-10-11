@@ -39,6 +39,12 @@ export interface ScreenConfig {
 }
 
 export interface AppConfig {
+  /**
+   * Config file format version (independent of the app version).
+   * Bumped on a breaking format change; a file with a higher version
+   * will not open in an older app.
+   */
+  schema: number
   /** UI language */
   language: Lang
   /** Settings window theme */
