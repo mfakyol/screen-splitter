@@ -103,6 +103,18 @@ export const IconExternal = (p: P): React.JSX.Element => (
   </svg>
 )
 
+export const IconPlus = (p: P): React.JSX.Element => (
+  <svg {...base} {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+)
+
+export const IconTrash = (p: P): React.JSX.Element => (
+  <svg {...base} {...p}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+  </svg>
+)
+
 export const Logo = (p: P): React.JSX.Element => (
   <svg width={28} height={28} viewBox="0 0 32 32" aria-hidden {...p}>
     <rect x="2" y="2" width="13" height="13" rx="3" fill="#3b82f6" />

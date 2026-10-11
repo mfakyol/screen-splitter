@@ -66,6 +66,15 @@ const tr = {
   'display.hideCursor': 'Fare imlecini gizle',
   'display.hideCursorDesc': 'Oynatıcı açıkken imleç görünmez',
 
+  'screens.add': 'Ekran ekle',
+  'screens.default': 'Ekran {n}',
+  'screens.conflict': 'Aynı monitör başka bir ekrana atanmış',
+  'screen.name': 'Ekran adı',
+  'screen.nameDesc': 'Yalnızca sekmede görünür',
+  'screen.delete': 'Bu ekranı sil',
+  'status.windows': '{n} pencere',
+  'toast.skipped': '{n} ekran atlandı: aynı monitöre birden fazla ekran atanmış',
+
   'autostart.windows': 'Windows açılışında başlat',
   'autostart.windowsDesc': 'Oturum açıldığında uygulama arka planda çalışır',
   'autostart.autoplay': 'Doğrudan oynatıcıyı aç',
@@ -188,6 +197,15 @@ const en: Record<TKey, string> = {
   'display.hideCursor': 'Hide mouse cursor',
   'display.hideCursorDesc': 'The cursor is invisible while the player runs',
 
+  'screens.add': 'Add screen',
+  'screens.default': 'Screen {n}',
+  'screens.conflict': 'This monitor is already assigned to another screen',
+  'screen.name': 'Screen name',
+  'screen.nameDesc': 'Only shown in the tab',
+  'screen.delete': 'Delete this screen',
+  'status.windows': '{n} windows',
+  'toast.skipped': '{n} screen(s) skipped: several screens target the same monitor',
+
   'autostart.windows': 'Launch at Windows login',
   'autostart.windowsDesc': 'The app runs in the background after sign-in',
   'autostart.autoplay': 'Open the player directly',
@@ -304,6 +322,15 @@ const de: Record<TKey, string> = {
   'display.backgroundDesc': 'Sichtbar in Abständen und beim Laden',
   'display.hideCursor': 'Mauszeiger ausblenden',
   'display.hideCursorDesc': 'Der Zeiger ist unsichtbar, solange der Player läuft',
+
+  'screens.add': 'Bildschirm hinzufügen',
+  'screens.default': 'Bildschirm {n}',
+  'screens.conflict': 'Dieser Monitor ist bereits einem anderen Bildschirm zugewiesen',
+  'screen.name': 'Bildschirmname',
+  'screen.nameDesc': 'Nur im Tab sichtbar',
+  'screen.delete': 'Diesen Bildschirm löschen',
+  'status.windows': '{n} Fenster',
+  'toast.skipped': '{n} Bildschirm(e) übersprungen: mehrere Bildschirme zielen auf denselben Monitor',
 
   'autostart.windows': 'Bei Windows-Anmeldung starten',
   'autostart.windowsDesc': 'Die App läuft nach der Anmeldung im Hintergrund',

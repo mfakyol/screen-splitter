@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { Layout, Zone } from '../../../shared/types'
+import type { Layout, ScreenConfig, Zone } from '../../../shared/types'
 import { layoutName } from '../../../shared/i18n'
 import type { PageProps } from '../pageProps'
 import LayoutPreview from '../LayoutPreview'
@@ -10,22 +10,24 @@ import { IconGlobe } from '../components/Icons'
 const EMPTY_ZONE: Zone = { url: '', refreshSec: 0, zoom: 1, muted: false }
 
 interface Props extends PageProps {
+  screen: ScreenConfig
+  updateScreen: (patch: Partial<ScreenConfig>) => void
   layouts: Layout[]
   layout: Layout
 }
 
-export default function LayoutPage({ config, t, update, layouts, layout }: Props): React.JSX.Element {
+export default function LayoutPage({ config, t, screen, updateScreen, layouts, layout }: Props): React.JSX.Element {
   const [activeZone, setActiveZone] = useState<number | null>(null)
   const lang = config.language
 
   const selectLayout = (l: Layout): void => {
-    const zones: Zone[] = l.zones.map((_z, i) => config.zones[i] ?? { ...EMPTY_ZONE })
-    update({ layoutId: l.id, zones })
+    const zones: Zone[] = l.zones.map((_z, i) => screen.zones[i] ?? { ...EMPTY_ZONE })
+    updateScreen({ layoutId: l.id, zones })
     setActiveZone(null)
   }
 
   const updateZone = (i: number, patch: Partial<Zone>): void => {
-    update({ zones: config.zones.map((z, idx) => (idx === i ? { ...z, ...patch } : z)) })
+    updateScreen({ zones: screen.zones.map((z, idx) => (idx === i ? { ...z, ...patch } : z)) })
   }
 
   const focusZone = (i: number): void => {
@@ -36,10 +38,10 @@ export default function LayoutPage({ config, t, update, layouts, layout }: Props
     el.focus({ preventScroll: true })
   }
 
-  const filled = config.zones.filter((z) => z.url.trim()).length
+  const filled = screen.zones.filter((z) => z.url.trim()).length
 
   return (
-    <div className="page-grid layout-page">
+    <div className="page-grid layout-page" key={screen.id}>
       <div className="col-main">
         <Card
           title={t('section.preview')}
@@ -51,7 +53,7 @@ export default function LayoutPage({ config, t, update, layouts, layout }: Props
               layout={layout}
               width={320}
               height={180}
-              gap={Math.max(2, config.gap / 4)}
+              gap={Math.max(2, screen.gap / 4)}
               activeIndex={activeZone}
               onZoneClick={focusZone}
             />
@@ -62,12 +64,12 @@ export default function LayoutPage({ config, t, update, layouts, layout }: Props
           title={t('section.zones')}
           actions={
             <span className="chip subtle">
-              {filled}/{config.zones.length}
+              {filled}/{screen.zones.length}
             </span>
           }
         >
           <div className="zone-list">
-            {config.zones.map((zone, i) => {
+            {screen.zones.map((zone, i) => {
               const ready = !!zone.url.trim()
               return (
                 <article
@@ -142,7 +144,7 @@ export default function LayoutPage({ config, t, update, layouts, layout }: Props
         <Card title={t('section.layouts')}>
           <div className="layout-grid" role="radiogroup" aria-label={t('section.layouts')}>
             {layouts.map((l) => {
-              const selected = l.id === config.layoutId
+              const selected = l.id === screen.layoutId
               return (
                 <button
                   key={l.id}

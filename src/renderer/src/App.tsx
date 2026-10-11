@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import type { AppConfig, DisplayInfo, Layout, PlayerStatus } from '../../shared/types'
+import type { AppConfig, DisplayInfo, Layout, PlayerStatus, ScreenConfig } from '../../shared/types'
 import { t as translate, type Lang, type TKey } from '../../shared/i18n'
 import type { TFn } from './pageProps'
 import { useTheme } from './useTheme'
@@ -7,6 +7,7 @@ import LayoutPage from './pages/LayoutPage'
 import DisplayPage from './pages/DisplayPage'
 import StartupPage from './pages/StartupPage'
 import AppearancePage from './pages/AppearancePage'
+import ScreenTabs from './components/ScreenTabs'
 import {
   IconLayout,
   IconMonitor,
@@ -29,6 +30,8 @@ const NAV: { id: PageId; label: TKey; desc: TKey; icon: React.ReactNode }[] = [
   { id: 'appearance', label: 'nav.appearance', desc: 'page.appearance.desc', icon: <IconPalette /> }
 ]
 
+const PAGES_WITH_SCREENS: PageId[] = ['layout', 'display']
+
 type Toast = { kind: 'ok' | 'err'; text: string } | null
 
 interface AppInfo {
@@ -37,12 +40,20 @@ interface AppInfo {
   packaged: boolean
 }
 
+const newId = (): string =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : 'scr-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+
+export const hasContent = (cfg: AppConfig): boolean => cfg.screens.some((s) => s.zones.some((z) => z.url.trim()))
+
 export default function App(): React.JSX.Element {
   const [config, setConfig] = useState<AppConfig | null>(null)
   const [layouts, setLayouts] = useState<Layout[]>([])
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
-  const [status, setStatus] = useState<PlayerStatus>({ running: false, displayId: null })
+  const [status, setStatus] = useState<PlayerStatus>({ running: false, windows: 0, skipped: [] })
   const [page, setPage] = useState<PageId>('layout')
+  const [activeScreenId, setActiveScreenId] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const [toast, setToast] = useState<Toast>(null)
   const [info, setInfo] = useState<AppInfo | null>(null)
@@ -76,13 +87,18 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     if (!toast) return
-    const timer = setTimeout(() => setToast(null), 2500)
+    const timer = setTimeout(() => setToast(null), 3000)
     return () => clearTimeout(timer)
   }, [toast])
 
+  const activeScreen: ScreenConfig | undefined = useMemo(
+    () => config?.screens.find((s) => s.id === activeScreenId) ?? config?.screens[0],
+    [config?.screens, activeScreenId]
+  )
+
   const layout = useMemo(
-    () => layouts.find((l) => l.id === config?.layoutId) ?? layouts[0],
-    [layouts, config?.layoutId]
+    () => layouts.find((l) => l.id === activeScreen?.layoutId) ?? layouts[0],
+    [layouts, activeScreen?.layoutId]
   )
 
   const update = useCallback((patch: Partial<AppConfig>) => {
@@ -90,18 +106,45 @@ export default function App(): React.JSX.Element {
     setDirty(true)
   }, [])
 
+  const updateScreen = useCallback((id: string, patch: Partial<ScreenConfig>) => {
+    setConfig((c) => (c ? { ...c, screens: c.screens.map((s) => (s.id === id ? { ...s, ...patch } : s)) } : c))
+    setDirty(true)
+  }, [])
+
+  const addScreen = (): void => {
+    if (!config) return
+    const usedDisplays = new Set(config.screens.map((s) => s.displayId))
+    const free = displays.find((d) => !usedDisplays.has(d.id) && !(d.primary && usedDisplays.has(null)))
+    const scr: ScreenConfig = {
+      id: newId(),
+      name: '',
+      displayId: free ? free.id : null,
+      layoutId: 'single',
+      zones: [{ url: '', refreshSec: 0, zoom: 1, muted: false }],
+      gap: 0,
+      background: '#000000'
+    }
+    update({ screens: [...config.screens, scr] })
+    setActiveScreenId(scr.id)
+  }
+
+  const removeScreen = (id: string): void => {
+    if (!config || config.screens.length <= 1) return
+    const idx = config.screens.findIndex((s) => s.id === id)
+    const rest = config.screens.filter((s) => s.id !== id)
+    update({ screens: rest })
+    setActiveScreenId(rest[Math.max(0, idx - 1)].id)
+  }
+
   /** Preferences like theme/language apply and save immediately; pending changes are kept. */
-  const applyNow = useCallback(
-    (patch: Partial<AppConfig>) => {
-      setConfig((c) => {
-        if (!c) return c
-        const next = { ...c, ...patch }
-        window.api.saveConfig(next).catch(() => setDirty(true))
-        return next
-      })
-    },
-    []
-  )
+  const applyNow = useCallback((patch: Partial<AppConfig>) => {
+    setConfig((c) => {
+      if (!c) return c
+      const next = { ...c, ...patch }
+      window.api.saveConfig(next).catch(() => setDirty(true))
+      return next
+    })
+  }, [])
 
   const save = async (): Promise<void> => {
     if (!config) return
@@ -117,7 +160,7 @@ export default function App(): React.JSX.Element {
 
   const start = async (): Promise<void> => {
     if (!config) return
-    if (!config.zones.some((z) => z.url.trim())) {
+    if (!hasContent(config)) {
       setToast({ kind: 'err', text: t('toast.needUrl') })
       setPage('layout')
       return
@@ -125,13 +168,14 @@ export default function App(): React.JSX.Element {
     const st = await window.api.startPlayer(config)
     setDirty(false)
     setStatus(st)
-    setToast({ kind: 'ok', text: t('toast.started') })
+    if (st.skipped.length > 0) setToast({ kind: 'err', text: t('toast.skipped', { n: st.skipped.length }) })
+    else setToast({ kind: 'ok', text: t('toast.started') })
   }
 
   const stop = async (): Promise<void> => setStatus(await window.api.stopPlayer())
   const refreshDisplays = async (): Promise<void> => setDisplays(await window.api.getDisplays())
 
-  if (!config || !layout) {
+  if (!config || !layout || !activeScreen) {
     return (
       <div className="loading">
         <span className="spinner" aria-hidden />
@@ -142,6 +186,10 @@ export default function App(): React.JSX.Element {
 
   const current = NAV.find((n) => n.id === page) ?? NAV[0]
   const pageProps = { config, t, update, applyNow }
+  const screenProps = {
+    screen: activeScreen,
+    updateScreen: (patch: Partial<ScreenConfig>) => updateScreen(activeScreen.id, patch)
+  }
 
   return (
     <div className="app">
@@ -173,6 +221,9 @@ export default function App(): React.JSX.Element {
           <div className={'status-pill ' + (status.running ? 'on' : 'off')}>
             <span className="dot" />
             {status.running ? t('status.running') : t('status.stopped')}
+            {status.running && status.windows > 1 && (
+              <span className="status-sub">{t('status.windows', { n: status.windows })}</span>
+            )}
           </div>
           {info && (
             <button type="button" className="link" onClick={() => window.api.revealConfig()}>
@@ -213,9 +264,31 @@ export default function App(): React.JSX.Element {
           </div>
         </header>
 
+        {PAGES_WITH_SCREENS.includes(page) && (
+          <div className="screen-tabs-bar">
+            <ScreenTabs
+              screens={config.screens}
+              displays={displays}
+              activeId={activeScreen.id}
+              onSelect={setActiveScreenId}
+              onAdd={addScreen}
+              t={t}
+            />
+          </div>
+        )}
+
         <div className="page-body">
-          {page === 'layout' && <LayoutPage {...pageProps} layouts={layouts} layout={layout} />}
-          {page === 'display' && <DisplayPage {...pageProps} displays={displays} onRefreshDisplays={refreshDisplays} />}
+          {page === 'layout' && <LayoutPage {...pageProps} {...screenProps} layouts={layouts} layout={layout} />}
+          {page === 'display' && (
+            <DisplayPage
+              {...pageProps}
+              {...screenProps}
+              displays={displays}
+              onRefreshDisplays={refreshDisplays}
+              canDelete={config.screens.length > 1}
+              onDelete={() => removeScreen(activeScreen.id)}
+            />
+          )}
           {page === 'startup' && <StartupPage {...pageProps} packaged={info?.packaged ?? true} />}
           {page === 'appearance' && <AppearancePage {...pageProps} />}
         </div>

@@ -1,13 +1,18 @@
 import type React from 'react'
-import type { DisplayInfo } from '../../../shared/types'
+import type { DisplayInfo, ScreenConfig } from '../../../shared/types'
 import type { PageProps } from '../pageProps'
 import { Card, SettingRow } from '../components/Card'
 import Switch from '../components/Switch'
-import { IconMonitor, IconRefresh, IconCheck } from '../components/Icons'
+import { IconMonitor, IconRefresh, IconCheck, IconTrash } from '../components/Icons'
+import { resolveTargets } from '../components/ScreenTabs'
 
 interface Props extends PageProps {
+  screen: ScreenConfig
+  updateScreen: (patch: Partial<ScreenConfig>) => void
   displays: DisplayInfo[]
   onRefreshDisplays: () => void
+  canDelete: boolean
+  onDelete: () => void
 }
 
 /** Mini rectangle on the display card: keeps the aspect ratio */
@@ -22,9 +27,22 @@ function Shape({ w, h }: { w: number; h: number }): React.JSX.Element {
   )
 }
 
-export default function DisplayPage({ config, t, update, displays, onRefreshDisplays }: Props): React.JSX.Element {
+export default function DisplayPage({
+  config,
+  t,
+  update,
+  screen,
+  updateScreen,
+  displays,
+  onRefreshDisplays,
+  canDelete,
+  onDelete
+}: Props): React.JSX.Element {
+  const { conflict } = resolveTargets(config.screens, displays)
+  const index = config.screens.indexOf(screen)
+
   return (
-    <div className="page-stack">
+    <div className="page-stack" key={screen.id}>
       <Card
         title={t('display.target')}
         description={t('display.targetDesc')}
@@ -34,13 +52,14 @@ export default function DisplayPage({ config, t, update, displays, onRefreshDisp
           </button>
         }
       >
+        {conflict.has(screen.id) && <p className="notice warn">{t('screens.conflict')}</p>}
         <div className="display-grid" role="radiogroup" aria-label={t('display.target')}>
           <button
             type="button"
             role="radio"
-            aria-checked={config.displayId === null}
-            className={'display-card' + (config.displayId === null ? ' selected' : '')}
-            onClick={() => update({ displayId: null })}
+            aria-checked={screen.displayId === null}
+            className={'display-card' + (screen.displayId === null ? ' selected' : '')}
+            onClick={() => updateScreen({ displayId: null })}
           >
             <span className="display-shape auto" aria-hidden>
               <IconMonitor width={26} height={26} />
@@ -52,7 +71,7 @@ export default function DisplayPage({ config, t, update, displays, onRefreshDisp
             </span>
           </button>
           {displays.map((d) => {
-            const selected = config.displayId === d.id
+            const selected = screen.displayId === d.id
             return (
               <button
                 key={d.id}
@@ -60,7 +79,7 @@ export default function DisplayPage({ config, t, update, displays, onRefreshDisp
                 role="radio"
                 aria-checked={selected}
                 className={'display-card' + (selected ? ' selected' : '')}
-                onClick={() => update({ displayId: d.id })}
+                onClick={() => updateScreen({ displayId: d.id })}
               >
                 <Shape w={d.bounds.width} h={d.bounds.height} />
                 <span className="display-name">{d.label}</span>
@@ -78,16 +97,27 @@ export default function DisplayPage({ config, t, update, displays, onRefreshDisp
       </Card>
 
       <Card>
+        <SettingRow label={t('screen.name')} description={t('screen.nameDesc')} htmlFor="screen-name">
+          <input
+            id="screen-name"
+            type="text"
+            className="text-md"
+            placeholder={t('screens.default', { n: index + 1 })}
+            value={screen.name}
+            onChange={(e) => updateScreen({ name: e.target.value })}
+          />
+        </SettingRow>
+
         <SettingRow label={t('display.gap')} description={t('display.gapDesc')} htmlFor="gap-input">
           <div className="range-row">
             <input
               type="range"
               min={0}
               max={60}
-              value={config.gap}
+              value={screen.gap}
               aria-hidden
               tabIndex={-1}
-              onChange={(e) => update({ gap: Number(e.target.value) })}
+              onChange={(e) => updateScreen({ gap: Number(e.target.value) })}
             />
             <input
               id="gap-input"
@@ -95,8 +125,8 @@ export default function DisplayPage({ config, t, update, displays, onRefreshDisp
               type="number"
               min={0}
               max={100}
-              value={config.gap}
-              onChange={(e) => update({ gap: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+              value={screen.gap}
+              onChange={(e) => updateScreen({ gap: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
             />
             <span className="unit">px</span>
           </div>
@@ -107,13 +137,23 @@ export default function DisplayPage({ config, t, update, displays, onRefreshDisp
             <input
               id="bg-input"
               type="color"
-              value={config.background}
-              onChange={(e) => update({ background: e.target.value })}
+              value={screen.background}
+              onChange={(e) => updateScreen({ background: e.target.value })}
             />
-            <code>{config.background}</code>
+            <code>{screen.background}</code>
           </div>
         </SettingRow>
 
+        {canDelete && (
+          <div className="setting-row">
+            <button type="button" className="btn danger sm" onClick={onDelete}>
+              <IconTrash /> {t('screen.delete')}
+            </button>
+          </div>
+        )}
+      </Card>
+
+      <Card>
         <div className="setting-row">
           <Switch
             label={t('display.hideCursor')}
