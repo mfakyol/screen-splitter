@@ -1,5 +1,5 @@
 import { BrowserWindow, WebContentsView, screen, type Display } from 'electron'
-import type { AppConfig, Rect } from '../shared/types'
+import type { AppConfig, Rect, ScreenConfig } from '../shared/types'
 import { getLayout } from '../shared/layouts'
 import { t, type Lang } from '../shared/i18n'
 
@@ -47,26 +47,63 @@ export function pickDisplay(displayId: number | null): Display {
   return all.find((d) => d.id === displayId) ?? screen.getPrimaryDisplay()
 }
 
-export class Player {
+export interface Assignment {
+  /** screen id -> display id to use */
+  assigned: Map<string, number>
+  /** screens skipped because their monitor was already taken */
+  skipped: string[]
+}
+
+/**
+ * Assigns a monitor to each screen definition. null/unknown display -> primary.
+ * A second screen on the same monitor is skipped (the first definition wins).
+ */
+export function assignDisplays(
+  screens: Pick<ScreenConfig, 'id' | 'displayId'>[],
+  displayIds: number[],
+  primaryId: number
+): Assignment {
+  const assigned = new Map<string, number>()
+  const used = new Set<number>()
+  const skipped: string[] = []
+  for (const s of screens) {
+    const target = s.displayId !== null && displayIds.includes(s.displayId) ? s.displayId : primaryId
+    if (used.has(target)) {
+      skipped.push(s.id)
+      continue
+    }
+    used.add(target)
+    assigned.set(s.id, target)
+  }
+  return { assigned, skipped }
+}
+
+interface GlobalOpts {
+  hideCursor: boolean
+  language: Lang
+}
+
+/** Kiosk window running on a single monitor */
+class ScreenPlayer {
   private win: BrowserWindow | null = null
   private views: WebContentsView[] = []
   private timers: NodeJS.Timeout[] = []
-  private config: AppConfig | null = null
+
+  constructor(
+    private readonly scr: ScreenConfig,
+    private readonly opts: GlobalOpts
+  ) {}
 
   get running(): boolean {
     return !!this.win && !this.win.isDestroyed()
   }
 
-  get displayId(): number | null {
-    return this.config?.displayId ?? null
+  get window(): BrowserWindow | null {
+    return this.running ? this.win : null
   }
 
-  start(config: AppConfig): void {
-    this.stop()
-    this.config = config
-    const display = pickDisplay(config.displayId)
+  start(display: Display): void {
     const { x, y, width, height } = display.bounds
-
     const win = new BrowserWindow({
       x,
       y,
@@ -78,7 +115,7 @@ export class Player {
       alwaysOnTop: true,
       skipTaskbar: true,
       autoHideMenuBar: true,
-      backgroundColor: config.background,
+      backgroundColor: this.scr.background,
       webPreferences: { sandbox: true, contextIsolation: true }
     })
     win.setMenuBarVisibility(false)
@@ -91,18 +128,18 @@ export class Player {
     win.on('resize', () => this.applyBounds())
     this.win = win
 
-    const layout = getLayout(config.layoutId)
+    const layout = getLayout(this.scr.layoutId)
     layout.zones.forEach((_rect, i) => {
-      const zone = config.zones[i]
+      const zone = this.scr.zones[i]
       const view = new WebContentsView({
         webPreferences: {
           sandbox: true,
           contextIsolation: true,
           backgroundThrottling: false,
-          partition: 'persist:zone-' + i
+          partition: `persist:screen-${this.scr.id}-zone-${i}`
         }
       })
-      view.setBackgroundColor(config.background)
+      view.setBackgroundColor(this.scr.background)
       win.contentView.addChildView(view)
       this.views.push(view)
 
@@ -111,11 +148,11 @@ export class Player {
       wc.on('did-finish-load', () => wc.setZoomFactor(zone.zoom || 1))
       wc.on('did-fail-load', (_e, code, desc, url, isMain) => {
         if (!isMain || code === -3) return
-        console.warn('[zone ' + i + '] failed to load (' + code + ' ' + desc + ') ' + url)
+        console.warn(`[${this.scr.id}/zone ${i}] failed to load (${code} ${desc}) ${url}`)
         this.timers.push(setTimeout(() => this.loadZone(i), RETRY_MS))
       })
       wc.on('render-process-gone', (_e, details) => {
-        console.warn('[zone ' + i + '] render process gone: ' + details.reason)
+        console.warn(`[${this.scr.id}/zone ${i}] render process gone: ${details.reason}`)
         this.timers.push(setTimeout(() => this.loadZone(i), 1000))
       })
       // Block new windows; open the link in the same zone
@@ -123,8 +160,7 @@ export class Player {
         wc.loadURL(url).catch(() => {})
         return { action: 'deny' }
       })
-
-      if (config.hideCursor) {
+      if (this.opts.hideCursor) {
         wc.on('dom-ready', () => {
           wc.insertCSS('html, body, * { cursor: none !important; }').catch(() => {})
         })
@@ -139,42 +175,37 @@ export class Player {
     this.applyBounds()
     win.show()
     win.setFullScreen(true)
-    win.focus()
   }
 
   private loadZone(i: number): void {
     const view = this.views[i]
-    const zone = this.config?.zones[i]
+    const zone = this.scr.zones[i]
     if (!view || !zone || view.webContents.isDestroyed()) return
     const url = normalizeUrl(zone.url)
-    view.webContents
-      .loadURL(url || placeholderHtml(i, this.config!.background, this.config!.language))
-      .catch(() => {})
+    view.webContents.loadURL(url || placeholderHtml(i, this.scr.background, this.opts.language)).catch(() => {})
   }
 
   reload(): void {
     this.views.forEach((_v, i) => this.loadZone(i))
   }
 
-  /** Move the window to the target display when the display setup changes */
-  refreshDisplay(): void {
-    if (!this.running || !this.config) return
-    const display = pickDisplay(this.config.displayId)
+  moveTo(display: Display): void {
+    if (!this.running) return
     this.win!.setBounds(display.bounds)
     this.applyBounds()
   }
 
   private applyBounds(): void {
-    if (!this.running || !this.config) return
+    if (!this.running) return
     const [W, H] = this.win!.getContentSize()
-    const layout = getLayout(this.config.layoutId)
-    computeZoneBounds(layout.zones, W, H, this.config.gap).forEach((b, i) => {
+    const layout = getLayout(this.scr.layoutId)
+    computeZoneBounds(layout.zones, W, H, this.scr.gap).forEach((b, i) => {
       this.views[i]?.setBounds(b)
     })
   }
 
   private clearTimers(): void {
-    this.timers.forEach((t) => clearInterval(t))
+    this.timers.forEach((tm) => clearInterval(tm))
     this.timers = []
   }
 
@@ -193,5 +224,73 @@ export class Player {
     }
     this.views = []
     this.win = null
+  }
+}
+
+/** Manages every screen window */
+export class Player {
+  private players = new Map<string, ScreenPlayer>()
+  private config: AppConfig | null = null
+  private lastSkipped: string[] = []
+
+  get running(): boolean {
+    return [...this.players.values()].some((p) => p.running)
+  }
+
+  get windowCount(): number {
+    return [...this.players.values()].filter((p) => p.running).length
+  }
+
+  get skipped(): string[] {
+    return this.lastSkipped
+  }
+
+  /** Display ids covered by player windows */
+  get usedDisplayIds(): number[] {
+    const ids: number[] = []
+    for (const p of this.players.values()) {
+      const w = p.window
+      if (w) ids.push(screen.getDisplayMatching(w.getBounds()).id)
+    }
+    return ids
+  }
+
+  start(config: AppConfig): void {
+    this.stop()
+    this.config = config
+    const displays = screen.getAllDisplays()
+    const { assigned, skipped } = assignDisplays(
+      config.screens,
+      displays.map((d) => d.id),
+      screen.getPrimaryDisplay().id
+    )
+    this.lastSkipped = skipped
+    for (const id of skipped) console.warn(`[player] screen ${id} skipped: monitor already assigned to another screen`)
+
+    const opts: GlobalOpts = { hideCursor: config.hideCursor, language: config.language }
+    for (const scr of config.screens) {
+      const displayId = assigned.get(scr.id)
+      if (displayId === undefined) continue
+      const display = displays.find((d) => d.id === displayId)!
+      const sp = new ScreenPlayer(scr, opts)
+      sp.start(display)
+      this.players.set(scr.id, sp)
+    }
+  }
+
+  reload(): void {
+    this.players.forEach((p) => p.reload())
+  }
+
+  /** Monitor added/removed: redistribute the windows */
+  refreshDisplays(): void {
+    if (!this.config || !this.running) return
+    this.start(this.config)
+  }
+
+  stop(): void {
+    this.players.forEach((p) => p.stop())
+    this.players.clear()
+    this.lastSkipped = []
   }
 }

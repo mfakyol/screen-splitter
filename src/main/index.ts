@@ -1,13 +1,11 @@
 import { app, BrowserWindow, ipcMain, screen, globalShortcut, Tray, Menu, nativeImage, shell } from 'electron'
 import { join } from 'path'
 import { existsSync } from 'fs'
-import { loadConfig, saveConfig, getConfigPath } from './config'
+import { loadConfig, saveConfig, getConfigPath, hasContent } from './config'
 import { LAYOUTS } from '../shared/layouts'
 import { Player } from './player'
 import { t, type Lang } from '../shared/i18n'
 import type { AppConfig, DisplayInfo, PlayerStatus } from '../shared/types'
-
-const lang = (): Lang => loadConfig().language
 
 const AUTOSTART_FLAG = '--autostart'
 
@@ -22,11 +20,14 @@ let settingsWin: BrowserWindow | null = null
 let tray: Tray | null = null
 const player = new Player()
 
+const lang = (): Lang => loadConfig().language
+
 // ---------- Settings window ----------
 function openSettings(): void {
   if (settingsWin && !settingsWin.isDestroyed()) {
     settingsWin.show()
     settingsWin.focus()
+    keepSettingsVisible()
     return
   }
   settingsWin = new BrowserWindow({
@@ -54,6 +55,32 @@ function openSettings(): void {
   } else {
     settingsWin.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  keepSettingsVisible()
+}
+
+/**
+ * While the player runs, keep the settings window from hiding under the kiosk windows:
+ * it moves to a free monitor if there is one and is always raised above the kiosk layer.
+ */
+function keepSettingsVisible(): void {
+  if (!settingsWin || settingsWin.isDestroyed()) return
+  if (!player.running) {
+    settingsWin.setAlwaysOnTop(false)
+    return
+  }
+  const used = new Set(player.usedDisplayIds)
+  const current = screen.getDisplayMatching(settingsWin.getBounds())
+  if (used.has(current.id)) {
+    const free = screen.getAllDisplays().find((d) => !used.has(d.id))
+    if (free) {
+      const { x, y, width, height } = free.workArea
+      const [w, h] = settingsWin.getSize()
+      settingsWin.setPosition(Math.round(x + (width - w) / 2), Math.round(y + (height - h) / 2))
+    }
+  }
+  // kiosk windows sit at the 'floating' level; settings stay one level above
+  settingsWin.setAlwaysOnTop(true, 'screen-saver')
+  settingsWin.moveTop()
 }
 
 function iconPath(): string | undefined {
@@ -69,18 +96,20 @@ function iconPath(): string | undefined {
 function startPlayer(cfg?: AppConfig): void {
   const config = cfg ?? loadConfig()
   player.start(config)
+  keepSettingsVisible()
   updateTray()
   broadcastStatus()
 }
 
 function stopPlayer(): void {
   player.stop()
+  keepSettingsVisible()
   updateTray()
   broadcastStatus()
 }
 
 function status(): PlayerStatus {
-  return { running: player.running, displayId: player.displayId }
+  return { running: player.running, windows: player.windowCount, skipped: player.skipped }
 }
 
 function broadcastStatus(): void {
@@ -189,15 +218,24 @@ app.whenReady().then(() => {
   registerShortcuts()
   createTray()
 
-  screen.on('display-added', () => player.refreshDisplay())
-  screen.on('display-removed', () => player.refreshDisplay())
-  screen.on('display-metrics-changed', () => player.refreshDisplay())
+  // Batch monitor changes and apply them once
+  let displayTimer: NodeJS.Timeout | null = null
+  const onDisplayChange = (): void => {
+    if (displayTimer) clearTimeout(displayTimer)
+    displayTimer = setTimeout(() => {
+      player.refreshDisplays()
+      keepSettingsVisible()
+      broadcastStatus()
+    }, 800)
+  }
+  screen.on('display-added', onDisplayChange)
+  screen.on('display-removed', onDisplayChange)
+  screen.on('display-metrics-changed', onDisplayChange)
 
   const cfg = loadConfig()
   const launchedAtLogin = process.argv.includes(AUTOSTART_FLAG)
-  const hasContent = cfg.zones.some((z) => z.url.trim())
 
-  if ((cfg.autoplay || launchedAtLogin) && hasContent) {
+  if ((cfg.autoplay || launchedAtLogin) && hasContent(cfg)) {
     startPlayer(cfg)
   } else {
     openSettings()

@@ -13,8 +13,65 @@ vi.mock('electron', () => ({
   }
 }))
 
-import { normalizeUrl, computeZoneBounds, pickDisplay } from './player'
+import { normalizeUrl, computeZoneBounds, pickDisplay, assignDisplays } from './player'
 import { getLayout } from '../shared/layouts'
+
+describe('assignDisplays', () => {
+  const displays = [1, 2, 3]
+  const primary = 1
+
+  it('assigns each screen to its requested monitor', () => {
+    const r = assignDisplays(
+      [
+        { id: 'a', displayId: 2 },
+        { id: 'b', displayId: 3 }
+      ],
+      displays,
+      primary
+    )
+    expect([...r.assigned.entries()]).toEqual([
+      ['a', 2],
+      ['b', 3]
+    ])
+    expect(r.skipped).toEqual([])
+  })
+
+  it('a null or unknown displayId falls back to the primary display', () => {
+    const r = assignDisplays(
+      [
+        { id: 'a', displayId: null },
+        { id: 'b', displayId: 999 }
+      ],
+      displays,
+      primary
+    )
+    expect(r.assigned.get('a')).toBe(1)
+    // b also falls back to primary, but a took it: skipped
+    expect(r.assigned.has('b')).toBe(false)
+    expect(r.skipped).toEqual(['b'])
+  })
+
+  it('skips a second screen on the same monitor; the first definition wins', () => {
+    const r = assignDisplays(
+      [
+        { id: 'a', displayId: 2 },
+        { id: 'b', displayId: 2 },
+        { id: 'c', displayId: 3 }
+      ],
+      displays,
+      primary
+    )
+    expect(r.assigned.get('a')).toBe(2)
+    expect(r.assigned.get('c')).toBe(3)
+    expect(r.skipped).toEqual(['b'])
+  })
+
+  it('an empty list gives an empty result', () => {
+    const r = assignDisplays([], displays, primary)
+    expect(r.assigned.size).toBe(0)
+    expect(r.skipped).toEqual([])
+  })
+})
 
 describe('normalizeUrl', () => {
   it('returns empty for empty and whitespace input', () => {
