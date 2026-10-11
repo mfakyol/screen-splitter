@@ -230,19 +230,23 @@ p {
     opacity: 0.5;
   }
 }
-.link {
-  border: 0;
-  background: none;
-  padding: 0;
+.backup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.backup-actions .btn {
+  justify-content: flex-start;
+  width: 100%;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.backup-actions .btn:hover:not(:disabled) {
+  color: var(--text);
+}
+.version {
   color: var(--text-3);
   font-size: 11.5px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  width: fit-content;
-}
-.link:hover {
-  color: var(--accent);
 }
 
 .main {

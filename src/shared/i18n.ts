@@ -82,6 +82,15 @@ const tr = {
   'status.windows': '{n} pencere',
   'toast.skipped': '{n} ekran atlandı: aynı monitöre birden fazla ekran atanmış',
 
+  'backup.export': 'Ayarları dışa aktar',
+  'backup.import': 'Ayarları içe aktar',
+  'toast.exported': 'Ayarlar dışa aktarıldı',
+  'toast.exportFailed': 'Dışa aktarılamadı: {err}',
+  'toast.imported': 'Ayarlar içe aktarıldı',
+  'toast.importFailed': 'İçe aktarılamadı: {err}',
+  'toast.importUnsupported':
+    'Dosya biçimi v{file}; uygulamanın bu sürümü en fazla v{supported} destekliyor. Uygulamayı güncelleyin.',
+
   'autostart.windows': 'Windows açılışında başlat',
   'autostart.windowsDesc': 'Oturum açıldığında uygulama arka planda çalışır',
   'autostart.autoplay': 'Doğrudan oynatıcıyı aç',
@@ -220,6 +229,15 @@ const en: Record<TKey, string> = {
   'status.windows': '{n} windows',
   'toast.skipped': '{n} screen(s) skipped: several screens target the same monitor',
 
+  'backup.export': 'Export settings',
+  'backup.import': 'Import settings',
+  'toast.exported': 'Settings exported',
+  'toast.exportFailed': 'Export failed: {err}',
+  'toast.imported': 'Settings imported',
+  'toast.importFailed': 'Import failed: {err}',
+  'toast.importUnsupported':
+    'File format is v{file}; this app version supports up to v{supported}. Please update the app.',
+
   'autostart.windows': 'Launch at Windows login',
   'autostart.windowsDesc': 'The app runs in the background after sign-in',
   'autostart.autoplay': 'Open the player directly',
@@ -352,6 +370,15 @@ const de: Record<TKey, string> = {
   'btn.delete': 'Löschen',
   'status.windows': '{n} Fenster',
   'toast.skipped': '{n} Bildschirm(e) übersprungen: mehrere Bildschirme zielen auf denselben Monitor',
+
+  'backup.export': 'Einstellungen exportieren',
+  'backup.import': 'Einstellungen importieren',
+  'toast.exported': 'Einstellungen exportiert',
+  'toast.exportFailed': 'Export fehlgeschlagen: {err}',
+  'toast.imported': 'Einstellungen importiert',
+  'toast.importFailed': 'Import fehlgeschlagen: {err}',
+  'toast.importUnsupported':
+    'Dateiformat ist v{file}; diese App-Version unterstützt höchstens v{supported}. Bitte App aktualisieren.',
 
   'autostart.windows': 'Bei Windows-Anmeldung starten',
   'autostart.windowsDesc': 'Die App läuft nach der Anmeldung im Hintergrund',

@@ -7,10 +7,27 @@ export interface AppInfo {
   packaged: boolean
 }
 
+export interface ExportResult {
+  ok: boolean
+  path?: string
+  canceled?: boolean
+  error?: string
+}
+
+export interface ImportResult {
+  ok: boolean
+  config?: AppConfig
+  canceled?: boolean
+  error?: string
+  /** The file format is newer than this app version */
+  unsupported?: { file: number; supported: number }
+}
+
 const api = {
   getConfig: (): Promise<AppConfig> => ipcRenderer.invoke('config:get'),
   saveConfig: (cfg: AppConfig): Promise<AppConfig> => ipcRenderer.invoke('config:save', cfg),
-  revealConfig: (): Promise<void> => ipcRenderer.invoke('config:reveal'),
+  exportConfig: (cfg: AppConfig): Promise<ExportResult> => ipcRenderer.invoke('config:export', cfg),
+  importConfig: (): Promise<ImportResult> => ipcRenderer.invoke('config:import'),
   getLayouts: (): Promise<Layout[]> => ipcRenderer.invoke('layouts:get'),
   getDisplays: (): Promise<DisplayInfo[]> => ipcRenderer.invoke('displays:get'),
   startPlayer: (cfg: AppConfig): Promise<PlayerStatus> => ipcRenderer.invoke('player:start', cfg),

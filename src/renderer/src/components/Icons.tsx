@@ -109,6 +109,18 @@ export const IconPlus = (p: P): React.JSX.Element => (
   </svg>
 )
 
+export const IconDownload = (p: P): React.JSX.Element => (
+  <svg {...base} {...p}>
+    <path d="M12 4v11M7 10l5 5 5-5M4 19h16" />
+  </svg>
+)
+
+export const IconUpload = (p: P): React.JSX.Element => (
+  <svg {...base} {...p}>
+    <path d="M12 15V4M7 9l5-5 5 5M4 19h16" />
+  </svg>
+)
+
 export const IconTrash = (p: P): React.JSX.Element => (
   <svg {...base} {...p}>
     <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />

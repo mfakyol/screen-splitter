@@ -1,7 +1,15 @@
-import { app, BrowserWindow, ipcMain, screen, globalShortcut, Tray, Menu, nativeImage, shell } from 'electron'
-import { join } from 'path'
-import { existsSync } from 'fs'
-import { loadConfig, saveConfig, getConfigPath, hasContent } from './config'
+import { app, BrowserWindow, dialog, ipcMain, screen, globalShortcut, Tray, Menu, nativeImage, shell } from 'electron'
+import { dirname, join } from 'path'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
+import {
+  loadConfig,
+  saveConfig,
+  getConfigPath,
+  hasContent,
+  normalizeConfig,
+  UnsupportedConfigError,
+  CONFIG_SCHEMA_VERSION
+} from './config'
 import { LAYOUTS } from '../shared/layouts'
 import { Player } from './player'
 import { t, type Lang } from '../shared/i18n'
@@ -140,7 +148,7 @@ function updateTray(): void {
       : { label: t(L, 'tray.start'), click: () => startPlayer() },
     { label: t(L, 'tray.reload'), enabled: player.running, click: () => player.reload() },
     { type: 'separator' },
-    { label: t(L, 'tray.config'), click: () => shell.showItemInFolder(getConfigPath()) },
+    { label: t(L, 'tray.config'), click: () => revealConfig() },
     { type: 'separator' },
     { label: t(L, 'tray.quit'), click: () => app.quit() }
   ])
@@ -202,7 +210,76 @@ function registerIpc(): void {
     configPath: getConfigPath(),
     packaged: app.isPackaged
   }))
-  ipcMain.handle('config:reveal', () => shell.showItemInFolder(getConfigPath()))
+  ipcMain.handle('config:export', async (_e, cfg: AppConfig): Promise<ExportResult> => {
+    const opts: Electron.SaveDialogOptions = {
+      title: t(cfg.language, 'backup.export'),
+      defaultPath: join(app.getPath('documents'), 'screen-splitter-settings.json'),
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    }
+    const parent = dialogParent()
+    const { canceled, filePath } = parent ? await dialog.showSaveDialog(parent, opts) : await dialog.showSaveDialog(opts)
+    if (canceled || !filePath) return { ok: false, canceled: true }
+    try {
+      writeFileSync(filePath, JSON.stringify(normalizeConfig(cfg), null, 2), 'utf8')
+      return { ok: true, path: filePath }
+    } catch (err) {
+      return { ok: false, error: String(err) }
+    }
+  })
+  ipcMain.handle('config:import', async (): Promise<ImportResult> => {
+    const current = loadConfig()
+    const opts: Electron.OpenDialogOptions = {
+      title: t(current.language, 'backup.import'),
+      properties: ['openFile'],
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    }
+    const parent = dialogParent()
+    const { canceled, filePaths } = parent ? await dialog.showOpenDialog(parent, opts) : await dialog.showOpenDialog(opts)
+    if (canceled || filePaths.length === 0) return { ok: false, canceled: true }
+    try {
+      let text = readFileSync(filePaths[0], 'utf8')
+      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
+      const parsed = JSON.parse(text)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid config')
+      const saved = saveConfig(normalizeConfig(parsed))
+      applyAutostart(saved.autostart)
+      updateTray()
+      if (settingsWin && !settingsWin.isDestroyed()) settingsWin.setTitle(t(saved.language, 'app.settingsTitle'))
+      if (player.running) startPlayer(saved)
+      return { ok: true, config: saved }
+    } catch (err) {
+      if (err instanceof UnsupportedConfigError) {
+        return { ok: false, unsupported: { file: err.fileSchema, supported: CONFIG_SCHEMA_VERSION } }
+      }
+      return { ok: false, error: String(err) }
+    }
+  })
+}
+
+interface ExportResult {
+  ok: boolean
+  path?: string
+  canceled?: boolean
+  error?: string
+}
+
+interface ImportResult {
+  ok: boolean
+  config?: AppConfig
+  canceled?: boolean
+  error?: string
+  /** The file format is newer than this app version */
+  unsupported?: { file: number; supported: number }
+}
+
+const dialogParent = (): BrowserWindow | undefined =>
+  settingsWin && !settingsWin.isDestroyed() ? settingsWin : undefined
+
+/** Reveals the config file in Explorer; opens the folder if the file does not exist yet */
+function revealConfig(): void {
+  const p = getConfigPath()
+  if (existsSync(p)) shell.showItemInFolder(p)
+  else shell.openPath(dirname(p)).catch(() => {})
 }
 
 // ---------- Lifecycle ----------

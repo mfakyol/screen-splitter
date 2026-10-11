@@ -21,6 +21,7 @@ const screen1: ScreenConfig = {
 }
 
 const baseConfig: AppConfig = {
+  schema: 2,
   language: 'tr',
   theme: 'dark',
   accent: 'blue',
@@ -45,7 +46,8 @@ function mockApi(overrides: Partial<AppConfig> = {}, status: PlayerStatus = IDLE
   const api: Api = {
     getConfig: vi.fn().mockResolvedValue(cfg),
     saveConfig: vi.fn().mockImplementation(async (c: AppConfig) => c),
-    revealConfig: vi.fn().mockResolvedValue(undefined),
+    exportConfig: vi.fn().mockResolvedValue({ ok: true, path: 'C:\\x\\screen-splitter-settings.json' }),
+    importConfig: vi.fn().mockResolvedValue({ ok: false, canceled: true }),
     getLayouts: vi.fn().mockResolvedValue(LAYOUTS),
     getDisplays: vi.fn().mockResolvedValue(displays),
     startPlayer: vi.fn().mockResolvedValue(RUNNING),
@@ -495,9 +497,76 @@ describe('App - startup page', () => {
     expect(screen.getByText('Uygulamadan çık')).toBeInTheDocument()
   })
 
-  it('shows the version and opens the config file', async () => {
+  it('shows the version', async () => {
+    await renderApp()
+    expect(screen.getByText('v0.1.0')).toBeInTheDocument()
+  })
+})
+
+describe('App - export/import settings', () => {
+  it('export is called with the on-screen config (including unsaved changes) and shows a toast', async () => {
     const api = await renderApp()
-    await user().click(screen.getByRole('button', { name: /v0\.1\.0/ }))
-    expect(api.revealConfig).toHaveBeenCalled()
+    await user().type(screen.getByLabelText('Bölge 2 URL'), 'b.com')
+    await user().click(screen.getByRole('button', { name: 'Ayarları dışa aktar' }))
+    await waitFor(() =>
+      expect(api.exportConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          screens: [expect.objectContaining({ zones: [expect.anything(), expect.objectContaining({ url: 'b.com' })] })]
+        })
+      )
+    )
+    expect(await screen.findByRole('status')).toHaveTextContent('Ayarlar dışa aktarıldı')
+    // exporting does not count as saving
+    expect(screen.getByText('Kaydedilmemiş değişiklikler')).toBeInTheDocument()
+  })
+
+  it('a canceled export stays silent, an error is shown', async () => {
+    const api = await renderApp()
+    ;(api.exportConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: false, canceled: true })
+    await user().click(screen.getByRole('button', { name: 'Ayarları dışa aktar' }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+
+    ;(api.exportConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: false, error: 'EACCES' })
+    await user().click(screen.getByRole('button', { name: 'Ayarları dışa aktar' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Dışa aktarılamadı: EACCES')
+  })
+
+  it('a successful import replaces the config and counts as saved', async () => {
+    const api = await renderApp()
+    const imported: AppConfig = {
+      ...baseConfig,
+      language: 'en',
+      screens: [{ ...screen1, id: 'imp1', name: 'Imported', layoutId: 'single', zones: [screen1.zones[0]] }]
+    }
+    ;(api.importConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, config: imported })
+    // make a change first: importing must reset dirty
+    await user().type(screen.getByLabelText('Bölge 2 URL'), 'x')
+    await user().click(screen.getByRole('button', { name: 'Ayarları içe aktar' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Screens' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Imported/ })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('status')).toHaveTextContent('Settings imported')
+    expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
+  })
+
+  it('rejects a newer-format file and shows version info', async () => {
+    const api = await renderApp()
+    ;(api.importConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      unsupported: { file: 3, supported: 2 }
+    })
+    await user().click(screen.getByRole('button', { name: 'Ayarları içe aktar' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Dosya biçimi v3; uygulamanın bu sürümü en fazla v2')
+    expect(screen.getByRole('tab', { name: /Ekran 1/ })).toBeInTheDocument()
+  })
+
+  it('a canceled import changes nothing, a broken file shows an error', async () => {
+    const api = await renderApp()
+    await user().click(screen.getByRole('button', { name: 'Ayarları içe aktar' }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+
+    ;(api.importConfig as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: false, error: 'SyntaxError' })
+    await user().click(screen.getByRole('button', { name: 'Ayarları içe aktar' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('İçe aktarılamadı: SyntaxError')
   })
 })

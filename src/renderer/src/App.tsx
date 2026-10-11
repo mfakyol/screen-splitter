@@ -16,7 +16,8 @@ import {
   IconStop,
   IconRefresh,
   IconSave,
-  IconExternal,
+  IconDownload,
+  IconUpload,
   Logo
 } from './components/Icons'
 
@@ -192,6 +193,34 @@ export default function App(): React.JSX.Element {
   const stop = async (): Promise<void> => setStatus(await window.api.stopPlayer())
   const refreshDisplays = async (): Promise<void> => setDisplays(await window.api.getDisplays())
 
+  /** Writes the on-screen settings (including unsaved changes) to a JSON file */
+  const exportSettings = async (): Promise<void> => {
+    if (!config) return
+    const r = await window.api.exportConfig(config)
+    if (r.canceled) return
+    setToast(r.ok ? { kind: 'ok', text: t('toast.exported') } : { kind: 'err', text: t('toast.exportFailed', { err: r.error ?? '' }) })
+  }
+
+  /** Loads settings from a JSON file; on success they count as saved */
+  const importSettings = async (): Promise<void> => {
+    const r = await window.api.importConfig()
+    if (r.canceled) return
+    if (r.unsupported) {
+      setToast({ kind: 'err', text: t('toast.importUnsupported', r.unsupported) })
+      return
+    }
+    if (!r.ok || !r.config) {
+      setToast({ kind: 'err', text: t('toast.importFailed', { err: r.error ?? '' }) })
+      return
+    }
+    setConfig(r.config)
+    markSaved(r.config)
+    setDirty(false)
+    setActiveScreenId(r.config.screens[0]?.id ?? null)
+    // The language may be imported too; show the toast in the new language
+    setToast({ kind: 'ok', text: translate(r.config.language, 'toast.imported') })
+  }
+
   if (!config || !layout || !activeScreen) {
     return (
       <div className="loading">
@@ -238,11 +267,15 @@ export default function App(): React.JSX.Element {
               <span className="status-sub">{t('status.windows', { n: status.windows })}</span>
             )}
           </div>
-          {info && (
-            <button type="button" className="link" onClick={() => window.api.revealConfig()}>
-              v{info.version} · config.json <IconExternal width={12} height={12} />
+          <div className="backup-actions">
+            <button type="button" className="btn ghost sm" onClick={exportSettings} title={t('backup.export')}>
+              <IconDownload /> {t('backup.export')}
             </button>
-          )}
+            <button type="button" className="btn ghost sm" onClick={importSettings} title={t('backup.import')}>
+              <IconUpload /> {t('backup.import')}
+            </button>
+          </div>
+          {info && <span className="version">v{info.version}</span>}
         </div>
       </aside>
 
