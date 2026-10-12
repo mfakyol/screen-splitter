@@ -6,6 +6,14 @@ It starts automatically with Windows.
 
 **Stack:** Electron + React + Vite + TypeScript (electron-vite)
 
+## Screenshots
+
+| Light theme | Dark theme |
+|---|---|
+| ![Settings window, light theme](docs/screenshots/light.png) | ![Settings window, dark theme](docs/screenshots/dark.png) |
+
+The images are generated from mock data with `npm run screenshot`, not captured by hand.
+
 ## Features
 
 - 12 layout presets: single, 2-up, 3-up, large + small combinations, 2x2 / 3x2 / 3x3 grids
@@ -65,6 +73,7 @@ npm run dev        # development with hot reload
 npm run typecheck
 npm run build      # compiles into out/
 npm run dist       # Windows NSIS installer (dist/)
+npm run screenshot # regenerates the README images (docs/screenshots/)
 ```
 
 ## Tests
