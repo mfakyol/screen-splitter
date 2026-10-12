@@ -1,7 +1,7 @@
 {
   "name": "screen-splitter",
   "productName": "Screen Splitter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "URL-based screen splitting / digital signage app for TVs and kiosks",
   "main": "./out/main/index.js",
   "private": true,
@@ -15,7 +15,9 @@
     "dist": "electron-vite build && electron-builder --win",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "screenshot": "electron scripts/screenshot.cjs",
+    "release": "node scripts/release.cjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",

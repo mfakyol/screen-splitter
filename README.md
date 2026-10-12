@@ -74,7 +74,16 @@ npm run typecheck
 npm run build      # compiles into out/
 npm run dist       # Windows NSIS installer (dist/)
 npm run screenshot # regenerates the README images (docs/screenshots/)
+npm run release    # typecheck + test + dist, then tag v<version> and create the GitHub Release (needs gh CLI)
 ```
+
+## Releasing
+
+There is no GitHub Actions pipeline; releases are cut manually:
+
+1. Bump `version` in `package.json` and commit.
+2. Make sure the GitHub CLI is signed in (`gh auth login`).
+3. Run `npm run release`. The script checks for a clean working tree and an unused tag, builds the installer, creates and pushes the `v<version>` tag, and uploads the installer to the Release. `npm run release -- --dry` runs only the local steps without touching GitHub.
 
 ## Tests
 
