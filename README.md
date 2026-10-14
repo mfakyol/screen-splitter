@@ -2,17 +2,11 @@
 
 [![Latest release](https://img.shields.io/github/v/release/mfakyol/screen-splitter?label=release&color=3b82f6)](https://github.com/mfakyol/screen-splitter/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078d4)](https://github.com/mfakyol/screen-splitter/releases/latest)
-[![Stack](https://img.shields.io/badge/Electron%20%2B%20React%20%2B%20Vite-TypeScript-3178c6)](#)
-[![Tests](https://img.shields.io/badge/tests-150%20passing-10b981)](#tests)
 [![License](https://img.shields.io/github/license/mfakyol/screen-splitter?color=64748b)](LICENSE)
 
-**[⬇ Download for Windows](https://github.com/mfakyol/screen-splitter/releases/latest)** · the installer is unsigned; on first run accept the SmartScreen prompt with "Run anyway".
+Digital signage for store TVs and kiosks. Screen Splitter divides a display into zones, loads a web page into each zone and runs them full screen on the monitors you choose. It starts with Windows and keeps running in the tray.
 
-URL-based screen splitting / digital signage for store TVs and kiosks. It shows several web pages in a layout of your choice, full screen (kiosk mode) on the monitor of your choice, and starts automatically with Windows. The UI is available in English, Turkish and German.
-
-**Stack:** Electron + React + Vite + TypeScript (electron-vite)
-
-## Demo
+**[⬇ Download for Windows](https://github.com/mfakyol/screen-splitter/releases/latest)**
 
 ![Switching layouts and screens, then the App page and the dark theme](docs/demo.gif)
 
@@ -20,126 +14,54 @@ URL-based screen splitting / digital signage for store TVs and kiosks. It shows 
 |---|---|
 | ![Settings window, light theme](docs/screenshots/light.png) | ![Settings window, dark theme](docs/screenshots/dark.png) |
 
-The GIF and screenshots are generated from mock data with `npm run demo` and `npm run screenshot`, not captured by hand.
-
 ## Features
 
-- 12 layout presets: single, 2-up, 3-up, large + small combinations, 2x2 / 3x2 / 3x3 grids
-- Per zone: URL, auto-refresh interval, zoom, mute
-- **Multiple screens:** each monitor gets its own layout and zones, with one kiosk window per monitor. If two screens target the same monitor the second is skipped with a warning. "Start All" opens every screen; "Start only this screen" in the tab bar opens just the selected one, and a green dot marks running screens
-- Every zone runs in its own `WebContentsView`, so sites that block iframes (X-Frame-Options) still load
-- Failed pages retry after 10 s; a crashed renderer reloads automatically
-- Kiosk mode: frameless, always on top, hidden from the taskbar, mouse cursor hidden
-- Launch at Windows login and open straight into the player, no settings window
-- Tray icon and global shortcuts
-- Windows are redistributed when monitors are plugged in or removed
-- While the player runs, the settings window stays behind the kiosk windows; summoning it with the shortcut or the tray brings it to the front
-- Languages: English, Turkish, German (picked from the system locale on first run, changeable on the Appearance page)
-- Theme: System / Light / Dark plus six accent colors, applied and saved instantly
-- Settings UI with left navigation: Screens (monitor, preview, zones, layouts and screen settings grouped on one page), App (startup, player, backup, shortcuts), Appearance
-- A legacy single-screen `config.json` is migrated to the new `screens` format on first launch
+- **12 layouts:** single, side by side, stacked, large + small combinations, 3 columns and 2x2 / 3x2 / 3x3 grids
+- **Multiple monitors:** every monitor gets its own layout and zones. Start them all at once or one at a time
+- **Any website:** each zone is an isolated browser view, so pages that refuse to be embedded still load
+- **Per-zone control:** auto-refresh interval, zoom level and mute
+- **Kiosk mode:** frameless, always on top, hidden from the taskbar, mouse cursor hidden
+- **Self-healing:** failed pages retry automatically, crashed pages reload, windows follow monitors that are plugged in or removed
+- **Starts with Windows:** can open straight into the player without showing the settings window
+- **Backup:** export all settings to a file and import them on another device
+- **Light and dark themes** with six accent colors
+- **English, Turkish and German** interface
 
-## Backup and the config format
+## Getting started
 
-The **Backup** card on the App page offers **Export settings / Import settings**, which save and restore all settings as a single JSON file; handy for copying one setup to many devices. Importing writes to disk immediately and restarts the player if it is running.
+1. Download and run the installer. It is unsigned, so on first run choose **More info → Run anyway** in the SmartScreen prompt.
+2. On the **Screens** page pick a monitor and a layout, then enter a web address for each zone.
+3. Use **Add screen** to set up another monitor.
+4. Press **Start All**. To get back to the settings, press `Ctrl+Shift+S` or double-click the tray icon.
+5. On the **App** page turn on **Launch at Windows login** so the screens come back after a restart.
 
-The `schema` field at the top of the file is the **config format version**, independent of the app version:
-
-| schema | Format |
-|---|---|
-| 1 | v0.1 flat format (`layoutId`, `zones`, `displayId` at the root); assumed when the field is missing |
-| 2 | `screens[]` array, theme and language fields |
-
-Older files are migrated on load. A file with a **newer** schema than the app supports is rejected: importing shows an "update the app" notice, and on startup the file is left untouched and defaults are used. When making a breaking change to the format, bump `CONFIG_SCHEMA_VERSION` and add a migration step to `normalizeConfig`.
-
-## Supported platforms
-
-This release is packaged and tested for **Windows 10 and later** only. macOS support is planned for a later version; Linux will be added on request.
-
-## Adding a language
-
-All strings live in [src/shared/i18n.ts](src/shared/i18n.ts). To add a language:
-1. Add the code to the `Lang` type (e.g. `'fr'`) and its label to `LANGUAGES`.
-2. Copy the `en` dictionary, translate it, and add it to `DICTS`.
-Missing keys fall back to English automatically.
-
-## Shortcuts
+## Keyboard shortcuts
 
 | Shortcut | Action |
 |---|---|
 | `Ctrl+Shift+S` | Open the settings window |
 | `Ctrl+Shift+X` | Stop the player |
-| `Ctrl+Shift+R` | Reload zones |
-| `Ctrl+Shift+Q` | Quit the app |
+| `Ctrl+Shift+R` | Reload all zones |
+| `Ctrl+Shift+Q` | Quit |
 
-## Development
+## Backing up settings
+
+**Export settings** on the App page saves everything (screens, layouts, addresses, preferences) to a single JSON file; **Import settings** loads it on any machine. Settings live in `%APPDATA%\Screen Splitter\config.json`. A file exported from a newer version of the app is rejected with a prompt to update, so older installs never misread it.
+
+## Requirements
+
+Windows 10 or later, 64-bit.
+
+## Building from source
 
 ```bash
 npm install
-npm run dev        # development with hot reload
-npm run typecheck
-npm run build      # compiles into out/
-npm run dist       # Windows NSIS installer (dist/)
-npm run screenshot # regenerates the README screenshots (docs/screenshots/)
-npm run demo       # regenerates the README demo GIF (docs/demo.gif)
-npm run release    # typecheck + test + dist, then tag v<version> and create the GitHub Release (needs gh CLI)
+npm run dev     # run with hot reload
+npm test        # 150 unit and component tests
+npm run dist    # build the Windows installer into dist/
 ```
 
-## Releasing
-
-There is no GitHub Actions pipeline; releases are cut manually:
-
-1. Bump `version` in `package.json` and commit.
-2. Make sure the GitHub CLI is signed in (`gh auth login`).
-3. Run `npm run release`. The script checks for a clean working tree and an unused tag, builds the installer, creates and pushes the `v<version>` tag, and uploads the installer to the Release. `npm run release -- --dry` runs only the local steps without touching GitHub.
-
-## Tests
-
-Vitest + Testing Library. Tests sit next to the source as `*.test.ts(x)`.
-
-```bash
-npm test               # single run
-npm run test:watch     # watch mode
-npm run test:coverage  # coverage report
-```
-
-| File | Covers |
-|---|---|
-| `src/shared/layouts.test.ts` | layout geometry: total area, overlap, bounds, fallback |
-| `src/shared/i18n.test.ts` | every key present in every language, consistent placeholders, locale selection |
-| `src/shared/theme.test.ts` | theme resolution, accent color validation |
-| `src/main/config.test.ts` | normalization, round-trip save, BOM, broken JSON, language detection, schema versioning, legacy migration (Electron mocked) |
-| `src/main/player.test.ts` | URL normalization, pixel bounds and gap math, monitor assignment, display selection |
-| `src/main/backup.test.ts` | import parser: broken JSON (syntax, empty file, array/null, BOM, CRLF), newer-schema rejection, legacy migration, export → import round-trip |
-| `src/renderer/src/App.test.tsx` | UI flows: language and theme switching, screen tabs, layout and zone editing, save, start/stop, delete confirmation, backup actions (jsdom, mocked `window.api`) |
-
-## Project structure
-
-```
-src/
-  main/        Electron main process
-    index.ts     windows, tray, shortcuts, IPC, autostart, export/import dialogs
-    player.ts    kiosk windows and zones (WebContentsView), monitor assignment
-    config.ts    config.json read/write, normalization, schema migration
-    backup.ts    pure parse/serialize helpers for export and import
-  preload/     API exposed to the renderer through contextBridge (window.api)
-  renderer/    React settings UI (pages/, components/, theme hook)
-  shared/      types, layout presets, translations, theme definitions
-scripts/       icon generator, screenshot and demo GIF generators, release script
-resources/     app icon
-docs/          screenshots and demo GIF
-```
-
-Settings are stored in `%APPDATA%\Screen Splitter\config.json`; the tray menu can reveal the file.
-
-## Roadmap (ideas)
-
-- Custom layout editor (drag and drop, free proportions)
-- URL rotation (playlists) per zone and time-based scheduling
-- Remote management: pull config from a central server, manage many devices
-- Local media zones (video/images)
-- Watchdog: reload frozen pages, scheduled daily restart
-- Screenshot / health reporting
+Built with Electron, React, Vite and TypeScript; tested with Vitest and Testing Library.
 
 ## License
 
