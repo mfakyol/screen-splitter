@@ -1,7 +1,7 @@
 {
   "name": "screen-splitter",
   "productName": "Screen Splitter",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "URL-based screen splitting / digital signage app for TVs and kiosks",
   "main": "./out/main/index.js",
   "private": true,
