@@ -27,6 +27,16 @@ Digital signage for store TVs and kiosks. Screen Splitter divides a display into
 - **Light and dark themes** with six accent colors
 - **English, Turkish and German** interface
 
+## Tech stack
+
+| Area | Technology |
+|---|---|
+| Desktop runtime | Electron 44: kiosk windows per monitor, one `WebContentsView` per zone, tray and global shortcuts |
+| Interface | React 19, TypeScript 7 |
+| Build | Vite 7 through electron-vite |
+| Packaging | electron-builder (NSIS installer) |
+| Testing | Vitest, Testing Library, jsdom (150 tests) |
+
 ## Getting started
 
 1. Download and run the installer. It is unsigned, so on first run choose **More info → Run anyway** in the SmartScreen prompt.
@@ -60,8 +70,6 @@ npm run dev     # run with hot reload
 npm test        # 150 unit and component tests
 npm run dist    # build the Windows installer into dist/
 ```
-
-Built with Electron, React, Vite and TypeScript; tested with Vitest and Testing Library.
 
 ## License
 
