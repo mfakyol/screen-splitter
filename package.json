@@ -1,7 +1,7 @@
 {
   "name": "screen-splitter",
   "productName": "Screen Splitter",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "URL-based screen splitting / digital signage app for TVs and kiosks",
   "main": "./out/main/index.js",
   "private": true,
@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "icon": "node scripts/make-icon.cjs",
     "dist": "electron-vite build && electron-builder --win",
+    "dist:mac": "electron-vite build && electron-builder --mac",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

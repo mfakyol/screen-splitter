@@ -96,6 +96,7 @@ const tr = {
     'Dosya biçimi v{file}; uygulamanın bu sürümü en fazla v{supported} destekliyor. Uygulamayı güncelleyin.',
 
   'autostart.windows': 'Windows açılışında başlat',
+  'autostart.mac': 'Oturum açılışında başlat',
   'autostart.windowsDesc': 'Oturum açıldığında uygulama arka planda çalışır',
   'autostart.autoplay': 'Doğrudan oynatıcıyı aç',
   'autostart.autoplayDesc': 'Uygulama açılınca ayar penceresi yerine oynatıcı başlar',
@@ -126,7 +127,7 @@ const tr = {
   'toast.saved': 'Ayarlar kaydedildi',
   'toast.saveFailed': 'Kaydedilemedi: {err}',
   'toast.needUrl': 'En az bir bölgeye URL girin',
-  'toast.started': 'Oynatıcı başlatıldı (durdurmak için Ctrl+Shift+X)',
+  'toast.started': 'Oynatıcı başlatıldı (durdurmak için {keys})',
 
   'tray.settings': 'Ayarlar',
   'tray.start': 'Oynatıcıyı Başlat',
@@ -247,6 +248,7 @@ const en: Record<TKey, string> = {
     'File format is v{file}; this app version supports up to v{supported}. Please update the app.',
 
   'autostart.windows': 'Launch at Windows login',
+  'autostart.mac': 'Launch at login',
   'autostart.windowsDesc': 'The app runs in the background after sign-in',
   'autostart.autoplay': 'Open the player directly',
   'autostart.autoplayDesc': 'Start the player instead of the settings window',
@@ -277,7 +279,7 @@ const en: Record<TKey, string> = {
   'toast.saved': 'Settings saved',
   'toast.saveFailed': 'Save failed: {err}',
   'toast.needUrl': 'Enter a URL for at least one zone',
-  'toast.started': 'Player started (press Ctrl+Shift+X to stop)',
+  'toast.started': 'Player started (press {keys} to stop)',
 
   'tray.settings': 'Settings',
   'tray.start': 'Start Player',
@@ -393,6 +395,7 @@ const de: Record<TKey, string> = {
     'Dateiformat ist v{file}; diese App-Version unterstützt höchstens v{supported}. Bitte App aktualisieren.',
 
   'autostart.windows': 'Bei Windows-Anmeldung starten',
+  'autostart.mac': 'Bei der Anmeldung starten',
   'autostart.windowsDesc': 'Die App läuft nach der Anmeldung im Hintergrund',
   'autostart.autoplay': 'Player direkt öffnen',
   'autostart.autoplayDesc': 'Startet den Player statt des Einstellungsfensters',
@@ -423,7 +426,7 @@ const de: Record<TKey, string> = {
   'toast.saved': 'Einstellungen gespeichert',
   'toast.saveFailed': 'Speichern fehlgeschlagen: {err}',
   'toast.needUrl': 'Geben Sie für mindestens einen Bereich eine URL ein',
-  'toast.started': 'Player gestartet (Ctrl+Shift+X zum Stoppen)',
+  'toast.started': 'Player gestartet ({keys} zum Stoppen)',
 
   'tray.settings': 'Einstellungen',
   'tray.start': 'Player starten',

@@ -1,12 +1,12 @@
 # Screen Splitter
 
 [![Latest release](https://img.shields.io/github/v/release/mfakyol/screen-splitter?label=release&color=3b82f6)](https://github.com/mfakyol/screen-splitter/releases/latest)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078d4)](https://github.com/mfakyol/screen-splitter/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-0078d4)](https://github.com/mfakyol/screen-splitter/releases/latest)
 [![License](https://img.shields.io/github/license/mfakyol/screen-splitter?color=64748b)](LICENSE)
 
-Digital signage for store TVs and kiosks. Screen Splitter divides a display into zones, loads a web page into each zone and runs them full screen on the monitors you choose. It starts with Windows and keeps running in the tray.
+Digital signage for store TVs and kiosks. Screen Splitter divides a display into zones, loads a web page into each zone and runs them full screen on the monitors you choose. It starts at login and keeps running in the tray (menu bar on macOS).
 
-**[⬇ Download for Windows](https://github.com/mfakyol/screen-splitter/releases/latest)**
+**[⬇ Download for Windows or macOS](https://github.com/mfakyol/screen-splitter/releases/latest)**
 
 ![Switching layouts and screens, then the App page and the dark theme](docs/demo.gif)
 
@@ -22,7 +22,7 @@ Digital signage for store TVs and kiosks. Screen Splitter divides a display into
 - **Per-zone control:** auto-refresh interval, zoom level and mute
 - **Kiosk mode:** frameless, always on top, hidden from the taskbar, mouse cursor hidden
 - **Self-healing:** failed pages retry automatically, crashed pages reload, windows follow monitors that are plugged in or removed
-- **Starts with Windows:** can open straight into the player without showing the settings window
+- **Starts at login** on Windows and macOS: can open straight into the player without showing the settings window
 - **Backup:** export all settings to a file and import them on another device
 - **Light and dark themes** with six accent colors
 - **English, Turkish and German** interface
@@ -34,41 +34,45 @@ Digital signage for store TVs and kiosks. Screen Splitter divides a display into
 | Desktop runtime | Electron 44: kiosk windows per monitor, one `WebContentsView` per zone, tray and global shortcuts |
 | Interface | React 19, TypeScript 7 |
 | Build | Vite 7 through electron-vite |
-| Packaging | electron-builder (NSIS installer) |
-| Testing | Vitest, Testing Library, jsdom (150 tests) |
+| Packaging | electron-builder (NSIS installer, DMG) |
+| Testing | Vitest, Testing Library, jsdom (151 tests) |
 
 ## Getting started
 
-1. Download and run the installer. It is unsigned, so on first run choose **More info → Run anyway** in the SmartScreen prompt.
+1. Download the file for your system from the [latest release](https://github.com/mfakyol/screen-splitter/releases/latest):
+   - **Windows:** run `Screen Splitter Setup <version>.exe`. It is unsigned, so on first run choose **More info → Run anyway** in the SmartScreen prompt.
+   - **macOS:** open the `arm64` DMG on Apple Silicon or the `x64` DMG on Intel and drag the app to Applications. It is not notarized, so the first launch is blocked: open **System Settings → Privacy & Security** and choose **Open Anyway**.
 2. On the **Screens** page pick a monitor and a layout, then enter a web address for each zone.
 3. Use **Add screen** to set up another monitor.
-4. Press **Start All**. To get back to the settings, press `Ctrl+Shift+S` or double-click the tray icon.
-5. On the **App** page turn on **Launch at Windows login** so the screens come back after a restart.
+4. Press **Start All**. To get back to the settings, press `Ctrl+Shift+S` (`⌘⇧S` on macOS) or double-click the tray icon.
+5. On the **App** page turn on **Launch at login** so the screens come back after a restart.
 
 ## Keyboard shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Ctrl+Shift+S` | Open the settings window |
-| `Ctrl+Shift+X` | Stop the player |
-| `Ctrl+Shift+R` | Reload all zones |
-| `Ctrl+Shift+Q` | Quit |
+| Windows | macOS | Action |
+|---|---|---|
+| `Ctrl+Shift+S` | `⌘⇧S` | Open the settings window |
+| `Ctrl+Shift+X` | `⌘⇧X` | Stop the player |
+| `Ctrl+Shift+R` | `⌘⇧R` | Reload all zones |
+| `Ctrl+Shift+Q` | `⌘⇧Q` | Quit |
 
 ## Backing up settings
 
-**Export settings** on the App page saves everything (screens, layouts, addresses, preferences) to a single JSON file; **Import settings** loads it on any machine. Settings live in `%APPDATA%\Screen Splitter\config.json`. A file exported from a newer version of the app is rejected with a prompt to update, so older installs never misread it.
+**Export settings** on the App page saves everything (screens, layouts, addresses, preferences) to a single JSON file; **Import settings** loads it on any machine. Settings live in `%APPDATA%\Screen Splitter\config.json` on Windows and `~/Library/Application Support/Screen Splitter/config.json` on macOS. A file exported from a newer version of the app is rejected with a prompt to update, so older installs never misread it.
 
 ## Requirements
 
-Windows 10 or later, 64-bit.
+- Windows 10 or later, 64-bit
+- macOS 12 Monterey or later, Apple Silicon or Intel
 
 ## Building from source
 
 ```bash
 npm install
-npm run dev     # run with hot reload
-npm test        # 150 unit and component tests
-npm run dist    # build the Windows installer into dist/
+npm run dev        # run with hot reload
+npm test           # 151 unit and component tests
+npm run dist       # build the Windows installer into dist/
+npm run dist:mac   # build the macOS DMGs into dist/ (on a Mac)
 ```
 
 ## License

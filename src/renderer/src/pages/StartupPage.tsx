@@ -6,6 +6,7 @@ import { IconDownload, IconUpload } from '../components/Icons'
 
 interface Props extends PageProps {
   packaged: boolean
+  isMac?: boolean
   onExport: () => void
   onImport: () => void
 }
@@ -17,13 +18,15 @@ const SHORTCUTS: { keys: string[]; label: 'keys.settings' | 'keys.stop' | 'keys.
   { keys: ['Ctrl', 'Shift', 'Q'], label: 'keys.quit' }
 ]
 
-export default function StartupPage({ config, t, update, packaged, onExport, onImport }: Props): React.JSX.Element {
+const MAC_KEYS: Record<string, string> = { Ctrl: '⌘', Shift: '⇧' }
+
+export default function StartupPage({ config, t, update, packaged, isMac, onExport, onImport }: Props): React.JSX.Element {
   return (
     <div className="page-stack narrow">
       <Card title={t('section.autostart')}>
         <div className="setting-row">
           <Switch
-            label={t('autostart.windows')}
+            label={t(isMac ? 'autostart.mac' : 'autostart.windows')}
             description={t('autostart.windowsDesc')}
             checked={config.autostart}
             onChange={(autostart) => update({ autostart })}
@@ -68,7 +71,7 @@ export default function StartupPage({ config, t, update, packaged, onExport, onI
             <li key={s.label}>
               <span>{t(s.label)}</span>
               <span className="keys">
-                {s.keys.map((k) => (
+                {s.keys.map((k) => (isMac ? MAC_KEYS[k] ?? k : k)).map((k) => (
                   <kbd key={k}>{k}</kbd>
                 ))}
               </span>

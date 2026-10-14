@@ -119,7 +119,7 @@ function broadcastStatus(): void {
   }
 }
 
-// ---------- Autostart (Windows login) ----------
+// ---------- Autostart (Windows / macOS login) ----------
 function applyAutostart(enabled: boolean): void {
   if (process.platform !== 'win32' && process.platform !== 'darwin') return
   if (app.isPackaged) {
@@ -206,7 +206,8 @@ function registerIpc(): void {
   ipcMain.handle('app:info', () => ({
     version: app.getVersion(),
     configPath: getConfigPath(),
-    packaged: app.isPackaged
+    packaged: app.isPackaged,
+    platform: process.platform
   }))
   ipcMain.handle('config:export', async (_e, cfg: AppConfig): Promise<ExportResult> => {
     const opts: Electron.SaveDialogOptions = {
@@ -274,7 +275,7 @@ interface ImportResult {
 const dialogParent = (): BrowserWindow | undefined =>
   settingsWin && !settingsWin.isDestroyed() ? settingsWin : undefined
 
-/** Reveals the config file in Explorer; opens the folder if the file does not exist yet */
+/** Reveals the config file in Explorer / Finder; opens the folder if the file does not exist yet */
 function revealConfig(): void {
   const p = getConfigPath()
   if (existsSync(p)) shell.showItemInFolder(p)
@@ -283,6 +284,10 @@ function revealConfig(): void {
 
 // ---------- Lifecycle ----------
 app.on('second-instance', () => openSettings())
+// macOS: clicking the Dock icon brings the settings window back
+app.on('activate', () => {
+  if (app.isReady()) openSettings()
+})
 
 app.whenReady().then(() => {
   registerIpc()

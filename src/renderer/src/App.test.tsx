@@ -527,6 +527,22 @@ describe('App - startup page', () => {
     expect(screen.getByRole('switch', { name: 'Fare imlecini gizle' })).toBeChecked()
   })
 
+  it('uses macOS wording and key symbols on macOS', async () => {
+    const api = mockApi({ autostart: true })
+    ;(api.getAppInfo as ReturnType<typeof vi.fn>).mockResolvedValue({
+      version: '0.1.0',
+      configPath: '/x/config.json',
+      packaged: true,
+      platform: 'darwin'
+    })
+    render(<App />)
+    await screen.findByRole('heading', { level: 1 })
+    await goTo(/^Uygulama$/)
+    expect(await screen.findByRole('switch', { name: 'Oturum açılışında başlat' })).toBeChecked()
+    expect(screen.getAllByText('⌘').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Ctrl')).not.toBeInTheDocument()
+  })
+
   it('warns in development mode with autostart on, not in the packaged build', async () => {
     await renderApp({ autostart: true }, undefined, false)
     await goTo(/^Uygulama$/)

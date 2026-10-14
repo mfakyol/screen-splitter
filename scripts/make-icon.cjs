@@ -1,9 +1,9 @@
-// Generates a simple 256x256 PNG icon (no external dependencies)
+// Generates a simple 1024x1024 PNG icon (macOS needs at least 512x512) (no external dependencies)
 const fs = require('fs')
 const zlib = require('zlib')
 const path = require('path')
 
-const SIZE = 256
+const SIZE = 1024
 const px = Buffer.alloc(SIZE * SIZE * 4)
 const colors = [
   [59, 130, 246],
@@ -12,8 +12,8 @@ const colors = [
   [239, 68, 68]
 ]
 const bg = [15, 23, 42]
-const gap = 14
-const margin = 24
+const gap = 56
+const margin = 96
 const half = (SIZE - margin * 2 - gap) / 2
 
 for (let y = 0; y < SIZE; y++) {

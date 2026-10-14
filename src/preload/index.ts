@@ -5,6 +5,7 @@ export interface AppInfo {
   version: string
   configPath: string
   packaged: boolean
+  platform: NodeJS.Platform
 }
 
 export interface ExportResult {

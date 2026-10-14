@@ -1,7 +1,8 @@
-// Manual release: typecheck + test + build the installer + create the GitHub Release and upload the file.
+// Manual release: typecheck + test + build the Windows installer and macOS DMGs + create the GitHub Release.
+// Run on macOS: the Windows installer cross-builds there, the DMGs need a Mac.
 // Usage: npm run release            -> tags v<package.json version>
 //        npm run release -- --dry   -> local steps only, GitHub untouched
-// Requires: gh CLI signed in (gh auth login), clean working tree.
+// Requires: macOS, gh CLI signed in (gh auth login), clean working tree.
 const { execSync, spawnSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
@@ -22,6 +23,7 @@ const fail = (msg) => {
 }
 
 // 1) Preflight checks
+if (process.platform !== 'darwin') fail('run the release on macOS; the DMGs can only be built there')
 if (out('git status --porcelain')) fail('working tree is not clean; commit first')
 if (out('git tag -l ' + tag)) fail(`${tag} already exists; bump the version in package.json`)
 if (!dry) {
@@ -32,11 +34,19 @@ if (!dry) {
 // 2) Verify and package
 run('npm run typecheck')
 run('npm test')
-run('npm run dist')
+fs.rmSync(path.join(ROOT, 'dist'), { recursive: true, force: true })
+run('npm run build')
+run('npx electron-builder --win --mac')
 
-const installer = path.join(ROOT, 'dist', `${pkg.productName} Setup ${pkg.version}.exe`)
-if (!fs.existsSync(installer)) fail('installer not found: ' + installer)
-console.log(`\ninstaller: ${installer} (${Math.round(fs.statSync(installer).size / 1048576)} MB)`)
+const assets = [
+  `${pkg.productName} Setup ${pkg.version}.exe`,
+  `${pkg.productName}-${pkg.version}-arm64.dmg`,
+  `${pkg.productName}-${pkg.version}-x64.dmg`
+].map((f) => path.join(ROOT, 'dist', f))
+for (const f of assets) {
+  if (!fs.existsSync(f)) fail('build output not found: ' + f)
+  console.log(`${path.basename(f)} (${Math.round(fs.statSync(f).size / 1048576)} MB)`)
+}
 
 if (dry) {
   console.log('\n--dry: skipped tag and GitHub Release')
@@ -46,6 +56,19 @@ if (dry) {
 // 3) Tag + Release
 run(`git tag -a ${tag} -m "${tag}"`)
 run(`git push origin main ${tag}`)
-const notes = `Windows installer for ${pkg.productName} ${pkg.version}.\n\nRequires Windows 10 or later. The installer is unsigned; accept the SmartScreen prompt on first run.`
-run(`gh release create ${tag} "${installer}" --title "${tag}" --notes "${notes.replace(/"/g, '\\"')}"`)
+const notesFile = path.join(ROOT, 'dist', 'release-notes.md')
+fs.writeFileSync(
+  notesFile,
+  [
+    `## Downloads`,
+    ``,
+    `- **Windows 10+ (64-bit):** \`${path.basename(assets[0])}\``,
+    `- **macOS 12+, Apple Silicon:** \`${path.basename(assets[1])}\``,
+    `- **macOS 12+, Intel:** \`${path.basename(assets[2])}\``,
+    ``,
+    `Neither build is signed by a publisher. On Windows choose **More info → Run anyway** in the SmartScreen prompt.`,
+    `On macOS open the app once, then allow it under **System Settings → Privacy & Security → Open Anyway**.`
+  ].join('\n')
+)
+run(`gh release create ${tag} ${assets.map((f) => `"${f}"`).join(' ')} --title "${tag}" --notes-file "${notesFile}"`)
 console.log('\nRelease ready: ' + tag)

@@ -33,6 +33,7 @@ interface AppInfo {
   version: string
   configPath: string
   packaged: boolean
+  platform?: string
 }
 
 const newId = (): string =>
@@ -52,6 +53,7 @@ export default function App(): React.JSX.Element {
   const [dirty, setDirty] = useState(false)
   const [toast, setToast] = useState<Toast>(null)
   const [info, setInfo] = useState<AppInfo | null>(null)
+  const isMac = info?.platform === 'darwin'
   /** Screen ids saved to disk; used for the delete confirmation */
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [pendingDelete, setPendingDelete] = useState<ScreenConfig | null>(null)
@@ -187,7 +189,7 @@ export default function App(): React.JSX.Element {
     setDirty(false)
     setStatus(st)
     if (st.skipped.length > 0) setToast({ kind: 'err', text: t('toast.skipped', { n: st.skipped.length }) })
-    else setToast({ kind: 'ok', text: t('toast.started') })
+    else setToast({ kind: 'ok', text: t('toast.started', { keys: isMac ? '⌘⇧X' : 'Ctrl+Shift+X' }) })
   }
   const startAll = (): Promise<void> => start()
 
@@ -335,6 +337,7 @@ export default function App(): React.JSX.Element {
             <StartupPage
               {...pageProps}
               packaged={info?.packaged ?? true}
+              isMac={isMac}
               onExport={exportSettings}
               onImport={importSettings}
             />

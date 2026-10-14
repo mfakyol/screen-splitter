@@ -4,6 +4,9 @@ import { getLayout } from '../shared/layouts'
 import { t, type Lang } from '../shared/i18n'
 
 const RETRY_MS = 10_000
+// macOS: native fullscreen opens a separate Space per window; simple fullscreen covers the
+// menu bar and Dock in place and can be moved between monitors
+const IS_MAC = process.platform === 'darwin'
 
 function placeholderHtml(index: number, bg: string, lang: Lang): string {
   const html =
@@ -111,7 +114,7 @@ class ScreenPlayer {
       height,
       show: false,
       frame: false,
-      kiosk: true,
+      kiosk: !IS_MAC,
       alwaysOnTop: true,
       skipTaskbar: true,
       autoHideMenuBar: true,
@@ -174,7 +177,8 @@ class ScreenPlayer {
 
     this.applyBounds()
     win.show()
-    win.setFullScreen(true)
+    if (IS_MAC) win.setSimpleFullScreen(true)
+    else win.setFullScreen(true)
   }
 
   private loadZone(i: number): void {
@@ -191,7 +195,9 @@ class ScreenPlayer {
 
   moveTo(display: Display): void {
     if (!this.running) return
+    if (IS_MAC) this.win!.setSimpleFullScreen(false)
     this.win!.setBounds(display.bounds)
+    if (IS_MAC) this.win!.setSimpleFullScreen(true)
     this.applyBounds()
   }
 
