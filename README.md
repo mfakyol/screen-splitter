@@ -1,5 +1,12 @@
 # Screen Splitter
 
+[![Latest release](https://img.shields.io/github/v/release/mfakyol/screen-splitter?label=release&color=3b82f6)](https://github.com/mfakyol/screen-splitter/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078d4)](https://github.com/mfakyol/screen-splitter/releases/latest)
+[![Stack](https://img.shields.io/badge/Electron%20%2B%20React%20%2B%20Vite-TypeScript-3178c6)](#)
+[![Tests](https://img.shields.io/badge/tests-150%20passing-10b981)](#tests)
+
+**[⬇ Download for Windows](https://github.com/mfakyol/screen-splitter/releases/latest)** · the installer is unsigned; on first run accept the SmartScreen prompt with "Run anyway".
+
 URL-based screen splitting / digital signage for store TVs and kiosks.
 It shows several web pages in a layout of your choice, full screen (kiosk mode) on the monitor of your choice.
 It starts automatically with Windows.
