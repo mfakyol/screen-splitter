@@ -8,9 +8,7 @@
 
 **[⬇ Download for Windows](https://github.com/mfakyol/screen-splitter/releases/latest)** · the installer is unsigned; on first run accept the SmartScreen prompt with "Run anyway".
 
-URL-based screen splitting / digital signage for store TVs and kiosks.
-It shows several web pages in a layout of your choice, full screen (kiosk mode) on the monitor of your choice.
-It starts automatically with Windows.
+URL-based screen splitting / digital signage for store TVs and kiosks. It shows several web pages in a layout of your choice, full screen (kiosk mode) on the monitor of your choice, and starts automatically with Windows. The UI is available in English, Turkish and German.
 
 **Stack:** Electron + React + Vite + TypeScript (electron-vite)
 
@@ -26,18 +24,17 @@ The images are generated from mock data with `npm run screenshot`, not captured 
 
 - 12 layout presets: single, 2-up, 3-up, large + small combinations, 2x2 / 3x2 / 3x3 grids
 - Per zone: URL, auto-refresh interval, zoom, mute
-- Target display selection (multiple monitors), gap between zones, background color
+- **Multiple screens:** each monitor gets its own layout and zones, with one kiosk window per monitor. If two screens target the same monitor the second is skipped with a warning. "Start All" opens every screen; "Start only this screen" in the tab bar opens just the selected one, and a green dot marks running screens
 - Every zone runs in its own `WebContentsView`, so sites that block iframes (X-Frame-Options) still load
 - Failed pages retry after 10 s; a crashed renderer reloads automatically
 - Kiosk mode: frameless, always on top, hidden from the taskbar, mouse cursor hidden
 - Launch at Windows login and open straight into the player, no settings window
 - Tray icon and global shortcuts
 - Windows are redistributed when monitors are plugged in or removed
+- While the player runs, the settings window stays behind the kiosk windows; summoning it with the shortcut or the tray brings it to the front
 - Languages: English, Turkish, German (picked from the system locale on first run, changeable on the Appearance page)
 - Theme: System / Light / Dark plus six accent colors, applied and saved instantly
 - Settings UI with left navigation: Screens (monitor, preview, zones, layouts and screen settings grouped on one page), App (startup, player, backup, shortcuts), Appearance
-- **Multiple screens:** each monitor gets its own layout and zones, with one kiosk window per monitor. If two screens target the same monitor the second is skipped with a warning. "Start All" opens every screen; "Start only this screen" in the tab bar opens just the selected one, and a green dot marks running screens
-- While the player runs, the settings window stays above the kiosk windows and moves to a free monitor if there is one
 - A legacy single-screen `config.json` is migrated to the new `screens` format on first launch
 
 ## Backup and the config format
@@ -107,23 +104,27 @@ npm run test:coverage  # coverage report
 |---|---|
 | `src/shared/layouts.test.ts` | layout geometry: total area, overlap, bounds, fallback |
 | `src/shared/i18n.test.ts` | every key present in every language, consistent placeholders, locale selection |
-| `src/main/config.test.ts` | normalization, round-trip save, BOM, broken JSON, language detection (Electron mocked) |
+| `src/shared/theme.test.ts` | theme resolution, accent color validation |
+| `src/main/config.test.ts` | normalization, round-trip save, BOM, broken JSON, language detection, schema versioning, legacy migration (Electron mocked) |
 | `src/main/player.test.ts` | URL normalization, pixel bounds and gap math, monitor assignment, display selection |
 | `src/main/backup.test.ts` | import parser: broken JSON (syntax, empty file, array/null, BOM, CRLF), newer-schema rejection, legacy migration, export → import round-trip |
-| `src/renderer/src/App.test.tsx` | UI flows: language switching, layout and zone editing, save, start/stop, display selection (jsdom, mocked `window.api`) |
+| `src/renderer/src/App.test.tsx` | UI flows: language and theme switching, screen tabs, layout and zone editing, save, start/stop, delete confirmation, backup actions (jsdom, mocked `window.api`) |
 
 ## Project structure
 
 ```
 src/
-  main/      Electron main process
-    index.ts   window management, tray, shortcuts, IPC, autostart
-    player.ts  kiosk window + zones (WebContentsView)
-    config.ts  config.json read/write
-  preload/   API exposed to the renderer through contextBridge (window.api)
-  renderer/  React settings UI
-  shared/    shared types and layout definitions
-resources/   icon
+  main/        Electron main process
+    index.ts     windows, tray, shortcuts, IPC, autostart, export/import dialogs
+    player.ts    kiosk windows and zones (WebContentsView), monitor assignment
+    config.ts    config.json read/write, normalization, schema migration
+    backup.ts    pure parse/serialize helpers for export and import
+  preload/     API exposed to the renderer through contextBridge (window.api)
+  renderer/    React settings UI (pages/, components/, theme hook)
+  shared/      types, layout presets, translations, theme definitions
+scripts/       icon generator, screenshot generator, release script
+resources/     app icon
+docs/          screenshots
 ```
 
 Settings are stored in `%APPDATA%\Screen Splitter\config.json`; the tray menu can reveal the file.
