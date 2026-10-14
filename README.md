@@ -74,3 +74,7 @@ npm run dist    # build the Windows installer into dist/
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Made by Fatih Akyol · [fatihakyol.com](https://fatihakyol.com/)
