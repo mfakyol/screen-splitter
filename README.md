@@ -4,6 +4,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078d4)](https://github.com/mfakyol/screen-splitter/releases/latest)
 [![Stack](https://img.shields.io/badge/Electron%20%2B%20React%20%2B%20Vite-TypeScript-3178c6)](#)
 [![Tests](https://img.shields.io/badge/tests-150%20passing-10b981)](#tests)
+[![License](https://img.shields.io/github/license/mfakyol/screen-splitter?color=64748b)](LICENSE)
 
 **[⬇ Download for Windows](https://github.com/mfakyol/screen-splitter/releases/latest)** · the installer is unsigned; on first run accept the SmartScreen prompt with "Run anyway".
 
@@ -135,3 +136,7 @@ Settings are stored in `%APPDATA%\Screen Splitter\config.json`; the tray menu ca
 - Local media zones (video/images)
 - Watchdog: reload frozen pages, scheduled daily restart
 - Screenshot / health reporting
+
+## License
+
+[MIT](LICENSE)
