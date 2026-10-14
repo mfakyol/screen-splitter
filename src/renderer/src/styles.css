@@ -393,16 +393,9 @@ p {
   gap: 16px;
   min-width: 0;
 }
-.col-side {
-  position: sticky;
-  top: 0;
-}
 @media (max-width: 1050px) {
   .page-grid {
     grid-template-columns: 1fr;
-  }
-  .col-side {
-    position: static;
   }
 }
 
