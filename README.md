@@ -12,13 +12,15 @@ URL-based screen splitting / digital signage for store TVs and kiosks. It shows 
 
 **Stack:** Electron + React + Vite + TypeScript (electron-vite)
 
-## Screenshots
+## Demo
+
+![Switching layouts and screens, then the App page and the dark theme](docs/demo.gif)
 
 | Light theme | Dark theme |
 |---|---|
 | ![Settings window, light theme](docs/screenshots/light.png) | ![Settings window, dark theme](docs/screenshots/dark.png) |
 
-The images are generated from mock data with `npm run screenshot`, not captured by hand.
+The GIF and screenshots are generated from mock data with `npm run demo` and `npm run screenshot`, not captured by hand.
 
 ## Features
 
@@ -78,7 +80,8 @@ npm run dev        # development with hot reload
 npm run typecheck
 npm run build      # compiles into out/
 npm run dist       # Windows NSIS installer (dist/)
-npm run screenshot # regenerates the README images (docs/screenshots/)
+npm run screenshot # regenerates the README screenshots (docs/screenshots/)
+npm run demo       # regenerates the README demo GIF (docs/demo.gif)
 npm run release    # typecheck + test + dist, then tag v<version> and create the GitHub Release (needs gh CLI)
 ```
 
@@ -122,9 +125,9 @@ src/
   preload/     API exposed to the renderer through contextBridge (window.api)
   renderer/    React settings UI (pages/, components/, theme hook)
   shared/      types, layout presets, translations, theme definitions
-scripts/       icon generator, screenshot generator, release script
+scripts/       icon generator, screenshot and demo GIF generators, release script
 resources/     app icon
-docs/          screenshots
+docs/          screenshots and demo GIF
 ```
 
 Settings are stored in `%APPDATA%\Screen Splitter\config.json`; the tray menu can reveal the file.
